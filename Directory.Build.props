@@ -1,0 +1,19 @@
+<Project>
+  <!-- 
+    This file is automatically imported by MSBuild into every project found in this directory tree.
+    It defines common properties for all projects in this solution.
+  -->
+  <PropertyGroup>
+    <!-- 
+      Redirects 'bin' and 'obj' folders to a common '_artifacts' directory
+      at the solution root level to keep the source folder clean.
+      The underscore ensures the folder is always sorted first visually.
+      
+      The condition prevents this from applying to projects that might be part of
+      a build pipeline or external tools that define their own output paths.
+    -->
+    <BaseOutputPath Condition="'$(BaseOutputPath)' == ''">$(MSBuildThisFileDirectory)_artifacts\bin\</BaseOutputPath>
+    <BaseIntermediateOutputPath Condition="'$(BaseIntermediateOutputPath)' == ''">$(MSBuildThisFileDirectory)_artifacts\obj\$(MSBuildProjectName)\</BaseIntermediateOutputPath>
+  </PropertyGroup>
+
+</Project>
