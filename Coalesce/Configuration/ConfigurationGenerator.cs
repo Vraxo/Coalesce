@@ -1,5 +1,6 @@
 ﻿using Coalesce.Cli;
 using Coalesce.Utils;
+using System;
 using System.Reflection;
 using System.Runtime.InteropServices;
 
@@ -93,48 +94,40 @@ public static class ConfigurationGenerator
 
     private static void TryGeneratingBatchFile()
     {
-        string filePath = Path.Combine(Environment.CurrentDirectory, BatchFileName);
-
-        if (File.Exists(filePath))
-        {
-            Logger.WriteWarning($"Batch file '{BatchFileName}' already exists. Generation skipped.");
-            Logger.WriteInfo(filePath);
-            return;
-        }
-
-        try
-        {
-            string batchContent = GetEmbeddedResource("Coalesce.Resources.coalesce-run.bat").Replace("\r\n", "\n").Replace("\n", "\r\n");
-            File.WriteAllText(filePath, batchContent);
-            Logger.WriteSuccess($"Created Windows run script: {filePath}");
-        }
-        catch (Exception ex)
-        {
-            Logger.WriteError($"Failed to generate '{BatchFileName}': {ex.Message}");
-        }
+        string content = GetEmbeddedResource("Coalesce.Resources.coalesce-run.bat").Replace("\r\n", "\n").Replace("\n", "\r\n");
+        TryGeneratingScriptFile(BatchFileName, "Windows run script", content);
     }
 
     private static void TryGeneratingShellScriptFile()
     {
-        string filePath = Path.Combine(Environment.CurrentDirectory, ShellFileName);
+        string content = GetEmbeddedResource("Coalesce.Resources.coalesce-run.sh").Replace("\r\n", "\n");
+        string postGenerationInfo = $"-> To make it executable, run: chmod +x {ShellFileName}";
+        TryGeneratingScriptFile(ShellFileName, "Linux/macOS run script", content, postGenerationInfo);
+    }
+
+    private static void TryGeneratingScriptFile(string fileName, string scriptType, string content, string? postGenerationInfo = null)
+    {
+        string filePath = Path.Combine(Environment.CurrentDirectory, fileName);
 
         if (File.Exists(filePath))
         {
-            Logger.WriteWarning($"Shell script '{ShellFileName}' already exists. Generation skipped.");
+            Logger.WriteWarning($"Script file '{fileName}' already exists. Generation skipped.");
             Logger.WriteInfo(filePath);
             return;
         }
 
         try
         {
-            string shellContent = GetEmbeddedResource("Coalesce.Resources.coalesce-run.sh").Replace("\r\n", "\n");
-            File.WriteAllText(filePath, shellContent);
-            Logger.WriteSuccess($"Created Linux/macOS run script: {filePath}");
-            Logger.WriteInfo($"-> To make it executable, run: chmod +x {ShellFileName}");
+            File.WriteAllText(filePath, content);
+            Logger.WriteSuccess($"Created {scriptType}: {filePath}");
+            if (postGenerationInfo != null)
+            {
+                Logger.WriteInfo(postGenerationInfo);
+            }
         }
         catch (Exception ex)
         {
-            Logger.WriteError($"Failed to generate '{ShellFileName}': {ex.Message}");
+            Logger.WriteError($"Failed to generate '{fileName}': {ex.Message}");
         }
     }
 }

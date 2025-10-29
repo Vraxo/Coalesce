@@ -46,32 +46,6 @@ public class ConfigurationProvider
             options.SourceDirectoryPaths = sourceArgs;
         }
 
-        // Flag options for excluded directories ADD to the values from the config file.
-        if (excludeDirOptions.Count > 0)
-        {
-            Logger.WriteVerbose("Adding to 'excludeDirectoryNames' from CLI arguments.");
-            foreach (string dir in excludeDirOptions)
-            {
-                if (!options.ExcludeDirectoryNames.Contains(dir, StringComparer.OrdinalIgnoreCase))
-                {
-                    options.ExcludeDirectoryNames.Add(dir);
-                }
-            }
-        }
-
-        // Flag options for excluded files ADD to the values from the config file.
-        if (excludeFileOptions.Count > 0)
-        {
-            Logger.WriteVerbose("Adding to 'excludeFileNames' from CLI arguments.");
-            foreach (string file in excludeFileOptions)
-            {
-                if (!options.ExcludeFileNames.Contains(file, StringComparer.OrdinalIgnoreCase))
-                {
-                    options.ExcludeFileNames.Add(file);
-                }
-            }
-        }
-
         // If --include-ext is used, it REPLACES the default/config list because it acts as a focused whitelist.
         if (includeExtOptions.Count > 0)
         {
@@ -79,28 +53,29 @@ public class ConfigurationProvider
             options.IncludeExtensions = includeExtOptions;
         }
 
-        // Exclude and path-only extensions from CLI are ADDED to the lists from the config file.
-        if (excludeExtOptions.Count > 0)
+        // Flag options for other lists ADD to the values from the config file.
+        AddCliOptionsToList(options.ExcludeDirectoryNames, excludeDirOptions, "excludeDirectoryNames");
+        AddCliOptionsToList(options.ExcludeFileNames, excludeFileOptions, "excludeFileNames");
+        AddCliOptionsToList(options.ExcludeExtensions, excludeExtOptions, "excludeExtensions");
+        AddCliOptionsToList(options.PathOnlyExtensions, pathOnlyExtOptions, "pathOnlyExtensions");
+    }
+
+    /// <summary>
+    /// Adds items from a CLI option list to a target configuration list, avoiding duplicates.
+    /// </summary>
+    private void AddCliOptionsToList(List<string> targetList, List<string> cliOptions, string optionName)
+    {
+        if (cliOptions.Count == 0)
         {
-            Logger.WriteVerbose("Adding to 'excludeExtensions' from CLI arguments.");
-            foreach (string ext in excludeExtOptions)
-            {
-                if (!options.ExcludeExtensions.Contains(ext, StringComparer.OrdinalIgnoreCase))
-                {
-                    options.ExcludeExtensions.Add(ext);
-                }
-            }
+            return;
         }
 
-        if (pathOnlyExtOptions.Count > 0)
+        Logger.WriteVerbose($"Adding to '{optionName}' from CLI arguments.");
+        foreach (string option in cliOptions)
         {
-            Logger.WriteVerbose("Adding to 'pathOnlyExtensions' from CLI arguments.");
-            foreach (string ext in pathOnlyExtOptions)
+            if (!targetList.Contains(option, StringComparer.OrdinalIgnoreCase))
             {
-                if (!options.PathOnlyExtensions.Contains(ext, StringComparer.OrdinalIgnoreCase))
-                {
-                    options.PathOnlyExtensions.Add(ext);
-                }
+                targetList.Add(option);
             }
         }
     }
