@@ -7,7 +7,7 @@ public static class PresetManager
 {
     private const string PresetsDirectoryName = "presets";
     private const string PresetsReadmeFileName = "_readme.md";
-    private const string PresetsTemplateFileName = "_template.yaml";
+    private const string PresetsTemplateFileName = "_template.toml";
     private static readonly string[] BuiltInPresets = ["dotnet", "node"];
 
     public static void List()
@@ -22,7 +22,7 @@ public static class PresetManager
         {
             try
             {
-                foreach (var file in Directory.EnumerateFiles(presetsPath, "*.yaml"))
+                foreach (string file in Directory.EnumerateFiles(presetsPath, "*.toml"))
                 {
                     string presetName = Path.GetFileNameWithoutExtension(file);
                     if (!presetName.StartsWith('_'))
@@ -40,7 +40,7 @@ public static class PresetManager
         SortedSet<string> allPresetNames = new(customPresets, StringComparer.OrdinalIgnoreCase);
         allPresetNames.UnionWith(BuiltInPresets);
 
-        foreach (var name in allPresetNames)
+        foreach (string name in allPresetNames)
         {
             bool isCustom = customPresets.Contains(name);
             bool isBuiltIn = BuiltInPresets.Contains(name, StringComparer.OrdinalIgnoreCase);
@@ -53,7 +53,7 @@ public static class PresetManager
             {
                 Logger.WriteInfo($"- {name} (custom)");
             }
-            else // isBuiltIn only
+            else
             {
                 Logger.WriteInfo($"- {name} (built-in)");
             }
@@ -62,7 +62,6 @@ public static class PresetManager
 
     public static void ShowPath()
     {
-        // Ensure the directory exists so the command always returns a valid, accessible path.
         EnsurePresetsDirectoryExists();
 
         string? presetsPath = GetPresetsDirectoryPath();
@@ -93,7 +92,6 @@ public static class PresetManager
                 Logger.WriteVerbose($"Created presets directory: {presetsPath}");
             }
 
-            // Ensure the readme file exists.
             string readmePath = Path.Combine(presetsPath, PresetsReadmeFileName);
             if (!File.Exists(readmePath))
             {
@@ -101,11 +99,10 @@ public static class PresetManager
                 File.WriteAllText(readmePath, readmeContent);
             }
 
-            // Ensure the template file exists.
             string templatePath = Path.Combine(presetsPath, PresetsTemplateFileName);
             if (!File.Exists(templatePath))
             {
-                string templateContent = GetEmbeddedResource("Coalesce.Resources.DefaultConfig.yaml");
+                string templateContent = GetEmbeddedResource("Coalesce.Resources.DefaultConfig.toml");
                 File.WriteAllText(templatePath, templateContent);
             }
         }
@@ -117,11 +114,10 @@ public static class PresetManager
 
     public static string? GetPresetContent(string presetName)
     {
-        // 1. Check for a user-defined preset in the file system first.
         string? presetsPath = GetPresetsDirectoryPath();
         if (presetsPath != null)
         {
-            string userPresetPath = Path.Combine(presetsPath, $"{presetName}.yaml");
+            string userPresetPath = Path.Combine(presetsPath, $"{presetName}.toml");
             if (File.Exists(userPresetPath))
             {
                 try
@@ -136,13 +132,12 @@ public static class PresetManager
             }
         }
 
-        // 2. Fall back to checking for a built-in embedded preset.
         if (BuiltInPresets.Contains(presetName, StringComparer.OrdinalIgnoreCase))
         {
             try
             {
                 Logger.WriteVerbose($"Loading built-in preset: {presetName}");
-                return GetEmbeddedResource($"Coalesce.Resources.Presets.{presetName}.yaml");
+                return GetEmbeddedResource($"Coalesce.Resources.Presets.{presetName}.toml");
             }
             catch (Exception ex)
             {

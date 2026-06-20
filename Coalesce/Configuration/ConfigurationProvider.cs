@@ -1,42 +1,35 @@
 ﻿using Coalesce.Utils;
 using System.Reflection;
-using YamlDotNet.Core;
-using YamlDotNet.Core.Events;
-using YamlDotNet.Serialization;
-using YamlDotNet.Serialization.NamingConventions;
+using Tomlyn;
 
 namespace Coalesce.Configuration;
 
 public class ConfigurationProvider
 {
-    public AppOptions? Build(string? outputArg, List<string> sourceArgs, List<string> excludeDirOptions, List<string> excludeFileOptions, List<string> includeExtOptions, List<string> excludeExtOptions, List<string> pathOnlyExtOptions, FileInfo? configFileOption)
+    public static AppOptions? Build(string? outputArg, List<string> sourceArgs, List<string> excludeDirOptions, List<string> excludeFileOptions, List<string> includeExtOptions, List<string> excludeExtOptions, List<string> pathOnlyExtOptions, FileInfo? configFileOption)
     {
-        // 1. Load base options from YAML file or fall back to embedded defaults.
         AppOptions? options = LoadOptions(configFileOption);
         if (options == null)
         {
-            return null; // A critical error occurred during loading.
+            return null;
         }
 
-        // 2. Apply command-line arguments as overrides.
         ApplyCommandLineOverrides(options, outputArg, sourceArgs, excludeDirOptions, excludeFileOptions, includeExtOptions, excludeExtOptions, pathOnlyExtOptions);
 
-        // 3. Validate the final, merged options.
         if (!Validate(options))
         {
-            return null; // Validation failed, errors were already logged.
+            return null;
         }
 
         return options;
     }
 
-    private void ApplyCommandLineOverrides(AppOptions options, string? outputArg, List<string> sourceArgs, List<string> excludeDirOptions, List<string> excludeFileOptions, List<string> includeExtOptions, List<string> excludeExtOptions, List<string> pathOnlyExtOptions)
+    private static void ApplyCommandLineOverrides(AppOptions options, string? outputArg, List<string> sourceArgs, List<string> excludeDirOptions, List<string> excludeFileOptions, List<string> includeExtOptions, List<string> excludeExtOptions, List<string> pathOnlyExtOptions)
     {
-        // Positional arguments for output and source REPLACE the values from the config file.
         if (!string.IsNullOrEmpty(outputArg))
         {
             Logger.WriteVerbose($"Overriding 'outputFilePath' with CLI argument: '{outputArg}'");
-            options.OutputFilePath = outputArg;
+            options.OutputFilePath = outputArg!;
         }
 
         if (sourceArgs.Count > 0)
@@ -45,24 +38,19 @@ public class ConfigurationProvider
             options.SourceDirectoryPaths = sourceArgs;
         }
 
-        // If --include-ext is used, it REPLACES the default/config list because it acts as a focused whitelist.
         if (includeExtOptions.Count > 0)
         {
             Logger.WriteVerbose("Replacing 'includeExtensions' with CLI arguments.");
             options.IncludeExtensions = includeExtOptions;
         }
 
-        // Flag options for other lists ADD to the values from the config file.
         AddCliOptionsToList(options.ExcludeDirectoryNames, excludeDirOptions, "excludeDirectoryNames");
         AddCliOptionsToList(options.ExcludeFileNames, excludeFileOptions, "excludeFileNames");
         AddCliOptionsToList(options.ExcludeExtensions, excludeExtOptions, "excludeExtensions");
         AddCliOptionsToList(options.PathOnlyExtensions, pathOnlyExtOptions, "pathOnlyExtensions");
     }
 
-    /// <summary>
-    /// Adds items from a CLI option list to a target configuration list, avoiding duplicates.
-    /// </summary>
-    private void AddCliOptionsToList(List<string> targetList, List<string> cliOptions, string optionName)
+    private static void AddCliOptionsToList(List<string> targetList, List<string> cliOptions, string optionName)
     {
         if (cliOptions.Count == 0)
         {
@@ -105,7 +93,7 @@ public class ConfigurationProvider
         return true;
     }
 
-    private AppOptions? LoadOptions(FileInfo? configFileOption)
+    private static AppOptions? LoadOptions(FileInfo? configFileOption)
     {
         string? resolvedConfigPath = null;
 
@@ -114,15 +102,14 @@ public class ConfigurationProvider
             if (!configFileOption.Exists)
             {
                 Logger.WriteWarning($"Configuration file specified via --config not found: {configFileOption.FullName}");
-                // Fall back to embedded defaults if specified config is missing
-                return LoadDefaultOptionsFromEmbedddedResource();
+                return LoadDefaultOptionsFromEmbedded();
             }
 
             resolvedConfigPath = configFileOption.FullName;
         }
         else
         {
-            string defaultConfigPath = Path.Combine(Environment.CurrentDirectory, "coalesce.yaml");
+            string defaultConfigPath = Path.Combine(Environment.CurrentDirectory, "coalesce.toml");
 
             if (File.Exists(defaultConfigPath))
             {
@@ -133,20 +120,19 @@ public class ConfigurationProvider
         if (resolvedConfigPath != null)
         {
             Logger.WriteInfo($"Loading configuration from: {resolvedConfigPath}");
-            return LoadOptionsFromYamlFile(resolvedConfigPath);
+            return LoadOptionsFromTomlFile(resolvedConfigPath);
         }
 
-        // No config file found, so use the embedded default configuration.
-        Logger.WriteVerbose("No 'coalesce.yaml' found. Using built-in default configuration.");
-        return LoadDefaultOptionsFromEmbedddedResource();
+        Logger.WriteVerbose("No 'coalesce.toml' found. Using built-in default configuration.");
+        return LoadDefaultOptionsFromEmbedded();
     }
 
-    private static AppOptions? LoadOptionsFromYamlFile(string configPath)
+    private static AppOptions? LoadOptionsFromTomlFile(string configPath)
     {
         try
         {
-            string yamlContent = File.ReadAllText(configPath);
-            return DeserializeYaml(yamlContent);
+            string tomlContent = File.ReadAllText(configPath);
+            return DeserializeToml(tomlContent);
         }
         catch (Exception ex)
         {
@@ -155,12 +141,12 @@ public class ConfigurationProvider
         }
     }
 
-    private static AppOptions? LoadDefaultOptionsFromEmbedddedResource()
+    private static AppOptions? LoadDefaultOptionsFromEmbedded()
     {
         try
         {
-            string yamlContent = GetEmbeddedResource("Coalesce.Resources.DefaultConfig.yaml");
-            return DeserializeYaml(yamlContent);
+            string tomlContent = GetEmbeddedResource("Coalesce.Resources.DefaultConfig.toml");
+            return DeserializeToml(tomlContent);
         }
         catch (Exception ex)
         {
@@ -183,44 +169,20 @@ public class ConfigurationProvider
         return reader.ReadToEnd();
     }
 
-    private static AppOptions? DeserializeYaml(string yamlContent)
+    private static AppOptions? DeserializeToml(string tomlContent)
     {
-        if (string.IsNullOrWhiteSpace(yamlContent))
+        if (string.IsNullOrWhiteSpace(tomlContent))
         {
             return new AppOptions();
         }
 
         try
         {
-            var reader = new StringReader(yamlContent);
-            var parser = new Parser(reader);
-
-            IDeserializer deserializer = new DeserializerBuilder()
-                .WithNamingConvention(CamelCaseNamingConvention.Instance)
-                .Build();
-
-            // Consume the stream start event
-            _ = parser.Consume<StreamStart>();
-
-            // An empty file or a file with only comments is valid.
-            // In this case, there are no more events after StreamStart except StreamEnd.
-            if (parser.Accept(out StreamEnd _))
-            {
-                return new();
-            }
-
-            // The deserializer reads a single document.
-            var options = deserializer.Deserialize<AppOptions>(parser) ?? new AppOptions();
-
-            // After successfully deserializing one document, we expect the end of the stream.
-            // If there is more content (e.g., a second document, or malformed text), this will fail.
-            _ = parser.Consume<StreamEnd>();
-
-            return options;
+            AppOptions? deserialized = TomlSerializer.Deserialize<AppOptions>(tomlContent);
+            return deserialized ?? new AppOptions();
         }
-        catch (YamlException ex)
+        catch (Exception ex)
         {
-            // Any parsing or deserialization error will be caught here.
             throw new FormatException($"The configuration file is malformed. {ex.Message}", ex);
         }
     }

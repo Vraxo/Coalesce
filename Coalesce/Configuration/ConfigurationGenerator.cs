@@ -1,6 +1,5 @@
 ﻿using Coalesce.Cli;
 using Coalesce.Utils;
-using System;
 using System.Reflection;
 using System.Runtime.InteropServices;
 
@@ -8,40 +7,37 @@ namespace Coalesce.Configuration;
 
 public static class ConfigurationGenerator
 {
-    private const string DefaultConfigFileName = "coalesce.yaml";
+    private const string DefaultConfigFileName = "coalesce.toml";
     private const string BatchFileName = "coalesce-run.bat";
     private const string ShellFileName = "coalesce-run.sh";
 
     public static void GenerateDefaultConfig(string? presetName)
     {
-        string? yamlContent;
+        string? tomlContent;
         string sourceName;
 
-        // The PresetManager now handles all the logic of finding/loading presets
-        // and setting up the presets directory on first use.
         PresetManager.EnsurePresetsDirectoryExists();
 
         if (string.IsNullOrWhiteSpace(presetName))
         {
-            yamlContent = GetEmbeddedResource("Coalesce.Resources.DefaultConfig.yaml");
+            tomlContent = GetEmbeddedResource("Coalesce.Resources.DefaultConfig.toml");
             sourceName = "default configuration";
         }
         else
         {
-            yamlContent = PresetManager.GetPresetContent(presetName);
+            tomlContent = PresetManager.GetPresetContent(presetName);
             sourceName = $"preset '{presetName}'";
         }
 
-        if (yamlContent == null)
+        if (tomlContent == null)
         {
             Logger.WriteError($"Preset '{presetName}' not found.");
             Logger.WriteSuggestion("Run 'coalesce preset list' to see all available presets.");
         }
         else
         {
-            TryGeneratingYamlConfigFile(yamlContent, sourceName);
+            TryGeneratingTomlConfigFile(tomlContent, sourceName);
 
-            // Generate OS-specific run script.
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
                 TryGeneratingBatchFile();
@@ -51,12 +47,9 @@ public static class ConfigurationGenerator
                 TryGeneratingShellScriptFile();
             }
         }
-
-        // The prompt is removed to create a smoother, scriptable CLI experience.
-        // The generated .bat script already includes a 'pause' command for the double-click use case.
     }
 
-    private static void TryGeneratingYamlConfigFile(string yamlContent, string sourceName)
+    private static void TryGeneratingTomlConfigFile(string tomlContent, string sourceName)
     {
         string filePath = Path.Combine(Environment.CurrentDirectory, DefaultConfigFileName);
 
@@ -69,7 +62,7 @@ public static class ConfigurationGenerator
 
         try
         {
-            File.WriteAllText(filePath, yamlContent);
+            File.WriteAllText(filePath, tomlContent);
             Logger.WriteSuccess($"Created configuration file from {sourceName}: {filePath}");
         }
         catch (Exception ex)

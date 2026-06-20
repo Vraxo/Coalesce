@@ -1,4 +1,5 @@
-﻿using Coalesce.Configuration;
+﻿using AwesomeAssertions;
+using Coalesce.Configuration;
 using Coalesce.Core;
 using Xunit;
 
@@ -27,7 +28,6 @@ public class DirectoryMergerTests : IDisposable
 
     public void Dispose()
     {
-        // Ensure file handles are released before deleting
         GC.Collect();
         GC.WaitForPendingFinalizers();
 
@@ -35,66 +35,60 @@ public class DirectoryMergerTests : IDisposable
         {
             Directory.Delete(_tempTestRoot, recursive: true);
         }
+
+        GC.SuppressFinalize(this);
     }
 
     [Fact]
     public void Merge_WhenDryRunIsTrue_DoesNotWriteOutputFile()
     {
-        // Arrange
-        var options = new AppOptions
+        AppOptions options = new()
         {
             OutputFilePath = _outputFilePath,
             SourceDirectoryPaths = [_sourceDir]
         };
-        var merger = new DirectoryMerger(options, dryRun: true);
+        DirectoryMerger merger = new(options, dryRun: true);
 
-        // Act
         merger.Merge();
 
-        // Assert
-        Assert.False(File.Exists(_outputFilePath), "The output file should not have been created during a dry run.");
+        File.Exists(_outputFilePath).Should().BeFalse(
+            "because dry run mode should only simulate the merge without writing any output");
     }
 
     [Fact]
     public void Merge_WhenDryRunIsFalse_WritesOutputFile()
     {
-        // Arrange
-        var options = new AppOptions
+        AppOptions options = new()
         {
             OutputFilePath = _outputFilePath,
             SourceDirectoryPaths = [_sourceDir],
             IncludeExtensions = [".cs", ".txt"]
         };
-        var merger = new DirectoryMerger(options, dryRun: false);
+        DirectoryMerger merger = new(options, dryRun: false);
 
-        // Act
         merger.Merge();
 
-        // Assert
-        Assert.True(File.Exists(_outputFilePath), "The output file should have been created during a normal merge.");
+        File.Exists(_outputFilePath).Should().BeTrue(
+            "because a normal merge process should successfully compile and write the output file");
     }
 
     [Fact]
     public void Merge_WhenOutputFileIsLocked_ShouldFailGracefully()
     {
-        // Arrange
-        var options = new AppOptions
+        AppOptions options = new()
         {
             OutputFilePath = _outputFilePath,
             SourceDirectoryPaths = [_sourceDir],
             IncludeExtensions = [".cs", ".txt"]
         };
-        var merger = new DirectoryMerger(options, dryRun: false);
+        DirectoryMerger merger = new(options, dryRun: false);
 
-        // Act
-        // Lock the file by opening a stream to it that we never close
-        using var _ = new FileStream(_outputFilePath, FileMode.Create, FileAccess.ReadWrite, FileShare.None);
-        merger.Merge();
+        using FileStream _ = new(
+            _outputFilePath,
+            FileMode.Create,
+            FileAccess.ReadWrite,
+            FileShare.None);
 
-        // Assert
-        // The test passes if no unhandled exception was thrown.
-        // In a real scenario, we would capture Console.Error output to verify
-        // that the correct error message was logged. For now, this is sufficient.
-        Assert.True(true);
+        merger.Invoking(m => m.Merge()).Should().NotThrow();
     }
 }

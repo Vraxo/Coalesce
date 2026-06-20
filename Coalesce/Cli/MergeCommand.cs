@@ -15,7 +15,7 @@ public class MergeCommand : Command<MergeSettings>
 
         FileInfo? configFile = !string.IsNullOrEmpty(settings.Config) ? new FileInfo(settings.Config) : null;
 
-        AppOptions? options = configProvider.Build(
+        AppOptions? options = ConfigurationProvider.Build(
             settings.OutputFile,
             [.. settings.SourceDirs],
             [.. settings.ExcludeDir],

@@ -1,4 +1,5 @@
-﻿using Coalesce.Configuration;
+﻿using AwesomeAssertions;
+using Coalesce.Configuration;
 using Xunit;
 
 namespace Coalesce.Tests.Configuration;
@@ -11,29 +12,34 @@ public class ConfigurationProviderTests : IDisposable
 
     public ConfigurationProviderTests()
     {
-        // Valid config
+        // Valid TOML config
         _tempConfigFile = Path.GetTempFileName();
-        string yamlContent = """
-            outputFilePath: from-config.txt
-            sourceDirectoryPaths:
-              - ./config-src-1
-              - ./config-src-2
-            excludeDirectoryNames:
-              - .git
-              - node_modules
-            includeExtensions:
-              - .yaml
-              - .json
-            excludeExtensions:
-              - .tmp
-            pathOnlyExtensions:
-              - .svg
+        string tomlContent = """
+            outputFilePath = "from-config.txt"
+            sourceDirectoryPaths = [
+              "./config-src-1",
+              "./config-src-2"
+            ]
+            excludeDirectoryNames = [
+              ".git",
+              "node_modules"
+            ]
+            includeExtensions = [
+              ".toml",
+              ".json"
+            ]
+            excludeExtensions = [
+              ".tmp"
+            ]
+            pathOnlyExtensions = [
+              ".svg"
+            ]
             """;
-        File.WriteAllText(_tempConfigFile, yamlContent);
+        File.WriteAllText(_tempConfigFile, tomlContent);
 
-        // Malformed config
+        // Malformed TOML config (unclosed brackets/quotes)
         _malformedConfigFile = Path.GetTempFileName();
-        File.WriteAllText(_malformedConfigFile, "outputFilePath: from-config.txt\n  - invalid-indent");
+        File.WriteAllText(_malformedConfigFile, "outputFilePath = \"from-config.txt\nsourceDirectoryPaths = [");
 
         // Empty file
         _emptyConfigFile = Path.GetTempFileName();
@@ -45,100 +51,80 @@ public class ConfigurationProviderTests : IDisposable
         File.Delete(_tempConfigFile);
         File.Delete(_malformedConfigFile);
         File.Delete(_emptyConfigFile);
+        GC.SuppressFinalize(this);
     }
 
     [Fact]
     public void Build_WhenNoConfigFile_UsesCliArgumentsAndDefaults()
     {
-        // Arrange
-        var provider = new ConfigurationProvider();
+        ConfigurationProvider provider = new();
         string cliOutputPath = "cli-output.txt";
-        var cliSourcePaths = new List<string> { "./cli-src" };
-        var cliExcludeDirs = new List<string> { "bin" };
-        var expectedExcludes = new AppOptions().ExcludeDirectoryNames;
+        List<string> cliSourcePaths = ["./cli-src"];
+        List<string> cliExcludeDirs = ["bin"];
 
-        // Act
-        var options = provider.Build(cliOutputPath, cliSourcePaths, cliExcludeDirs, [], [], [], [], null);
+        AppOptions? options = ConfigurationProvider.Build(cliOutputPath, cliSourcePaths, cliExcludeDirs, [], [], [], [], null);
 
-        // Assert
-        Assert.NotNull(options);
-        Assert.Equal(cliOutputPath, options.OutputFilePath);
-        Assert.Equal(cliSourcePaths, options.SourceDirectoryPaths);
-        Assert.Contains("bin", options.ExcludeDirectoryNames); // Should add to defaults
+        options.Should().NotBeNull();
+        options!.OutputFilePath.Should().Be(cliOutputPath);
+        options.SourceDirectoryPaths.Should().BeEquivalentTo(cliSourcePaths);
+        options.ExcludeDirectoryNames.Should().Contain("bin");
     }
 
     [Fact]
     public void Build_WhenNoCliOverrides_LoadsOptionsFromConfigFile()
     {
-        // Arrange
-        var provider = new ConfigurationProvider();
-        var configFile = new FileInfo(_tempConfigFile);
+        ConfigurationProvider provider = new();
+        FileInfo configFile = new(_tempConfigFile);
 
-        // Act
-        var options = provider.Build(null, [], [], [], [], [], [], configFile);
+        AppOptions? options = ConfigurationProvider.Build(null, [], [], [], [], [], [], configFile);
 
-        // Assert
-        Assert.NotNull(options);
-        Assert.Equal("from-config.txt", options.OutputFilePath);
-        Assert.Equal(2, options.SourceDirectoryPaths.Count);
-        Assert.Contains("./config-src-1", options.SourceDirectoryPaths);
-        Assert.Equal(2, options.ExcludeDirectoryNames.Count);
-        Assert.Contains("node_modules", options.ExcludeDirectoryNames);
-        Assert.Contains(".yaml", options.IncludeExtensions);
-        Assert.Contains(".tmp", options.ExcludeExtensions);
-        Assert.Contains(".svg", options.PathOnlyExtensions);
+        options.Should().NotBeNull();
+        options!.OutputFilePath.Should().Be("from-config.txt");
+        options.SourceDirectoryPaths.Should().HaveCount(2).And.ContainInOrder("./config-src-1", "./config-src-2");
+        options.ExcludeDirectoryNames.Should().HaveCount(2).And.ContainInOrder(".git", "node_modules");
+        options.IncludeExtensions.Should().BeEquivalentTo(".toml", ".json");
+        options.ExcludeExtensions.Should().BeEquivalentTo(".tmp");
+        options.PathOnlyExtensions.Should().BeEquivalentTo(".svg");
     }
 
     [Fact]
     public void Build_WhenCliPathArgsExist_TheyReplaceConfigFileValues()
     {
-        // Arrange
-        var provider = new ConfigurationProvider();
-        var configFile = new FileInfo(_tempConfigFile);
+        ConfigurationProvider provider = new();
+        FileInfo configFile = new(_tempConfigFile);
         string cliOutputPath = "cli-output.txt";
-        var cliSourcePaths = new List<string> { "./cli-src" };
+        List<string> cliSourcePaths = ["./cli-src"];
 
-        // Act
-        var options = provider.Build(cliOutputPath, cliSourcePaths, [], [], [], [], [], configFile);
+        AppOptions? options = ConfigurationProvider.Build(cliOutputPath, cliSourcePaths, [], [], [], [], [], configFile);
 
-        // Assert
-        Assert.NotNull(options);
-        Assert.Equal(cliOutputPath, options.OutputFilePath);
-        Assert.Equal(cliSourcePaths, options.SourceDirectoryPaths);
+        options.Should().NotBeNull();
+        options!.OutputFilePath.Should().Be(cliOutputPath);
+        options.SourceDirectoryPaths.Should().BeEquivalentTo(cliSourcePaths);
     }
 
     [Fact]
     public void Build_WhenCliExcludeArgsExist_TheyAreAddedToConfigFileValues()
     {
-        // Arrange
-        var provider = new ConfigurationProvider();
-        var configFile = new FileInfo(_tempConfigFile);
-        var cliExcludeDirs = new List<string> { "bin", "obj" };
+        ConfigurationProvider provider = new();
+        FileInfo configFile = new(_tempConfigFile);
+        List<string> cliExcludeDirs = ["bin", "obj"];
 
-        // Act
-        var options = provider.Build(null, [], cliExcludeDirs, [], [], [], [], configFile);
+        AppOptions? options = ConfigurationProvider.Build(null, [], cliExcludeDirs, [], [], [], [], configFile);
 
-        // Assert
-        Assert.NotNull(options);
-        Assert.Equal(4, options.ExcludeDirectoryNames.Count);
-        Assert.Contains(".git", options.ExcludeDirectoryNames);
-        Assert.Contains("node_modules", options.ExcludeDirectoryNames);
-        Assert.Contains("bin", options.ExcludeDirectoryNames);
-        Assert.Contains("obj", options.ExcludeDirectoryNames);
+        options.Should().NotBeNull();
+        options!.ExcludeDirectoryNames.Should().BeEquivalentTo(".git", "node_modules", "bin", "obj");
     }
 
     [Fact]
     public void Build_WhenCliExtensionArgsExist_TheyAreAppliedCorrectly()
     {
-        // Arrange
-        var provider = new ConfigurationProvider();
-        var configFile = new FileInfo(_tempConfigFile);
-        var cliIncludeExt = new List<string> { ".md" }; // should replace [.yaml, .json]
-        var cliExcludeExt = new List<string> { ".log" }; // should be added to [.tmp]
-        var cliPathOnlyExt = new List<string> { ".bin" }; // should be added to [.svg]
+        ConfigurationProvider provider = new();
+        FileInfo configFile = new(_tempConfigFile);
+        List<string> cliIncludeExt = [".md"];
+        List<string> cliExcludeExt = [".log"];
+        List<string> cliPathOnlyExt = [".bin"];
 
-        // Act
-        var options = provider.Build(
+        AppOptions? options = ConfigurationProvider.Build(
             null,
             [],
             [],
@@ -148,84 +134,85 @@ public class ConfigurationProviderTests : IDisposable
             cliPathOnlyExt,
             configFile);
 
-        // Assert
-        Assert.NotNull(options);
+        options.Should().NotBeNull();
 
-        // --include-ext should REPLACE
-        Assert.Equal(cliIncludeExt, options.IncludeExtensions);
-        Assert.DoesNotContain(".yaml", options.IncludeExtensions);
+        options!.IncludeExtensions.Should().BeEquivalentTo(cliIncludeExt);
+        options.IncludeExtensions.Should().NotContain(".toml");
 
-        // --exclude-ext should ADD
-        Assert.Equal(2, options.ExcludeExtensions.Count);
-        Assert.Contains(".tmp", options.ExcludeExtensions);
-        Assert.Contains(".log", options.ExcludeExtensions);
-
-        // --path-only-ext should ADD
-        Assert.Equal(2, options.PathOnlyExtensions.Count);
-        Assert.Contains(".svg", options.PathOnlyExtensions);
-        Assert.Contains(".bin", options.PathOnlyExtensions);
+        options.ExcludeExtensions.Should().BeEquivalentTo(".tmp", ".log");
+        options.PathOnlyExtensions.Should().BeEquivalentTo(".svg", ".bin");
     }
 
     [Fact]
     public void Build_WhenValidationFails_ReturnsNull()
     {
-        // Arrange
-        var provider = new ConfigurationProvider();
+        ConfigurationProvider provider = new();
         string cliOutputPath = "cli-output.txt";
-        var emptySourcePaths = new List<string>();
-        var emptyConfigFileInfo = new FileInfo(_emptyConfigFile);
+        List<string> emptySourcePaths = [];
+        FileInfo emptyConfigFileInfo = new(_emptyConfigFile);
 
-        // Act
-        // No source paths are provided via CLI, and the config file is empty, so it should fail validation.
-        var options = provider.Build(cliOutputPath, emptySourcePaths, [], [], [], [], [], emptyConfigFileInfo);
+        AppOptions? options = ConfigurationProvider.Build(
+            cliOutputPath,
+            emptySourcePaths,
+            [],
+            [],
+            [],
+            [],
+            [],
+            emptyConfigFileInfo);
 
-        // Assert
-        Assert.Null(options);
+        options.Should().BeNull();
     }
 
     [Fact]
-    public void Build_WithMalformedYamlFile_ReturnsNull()
+    public void Build_WithMalformedTomlFile_ReturnsNull()
     {
-        // Arrange
-        var provider = new ConfigurationProvider();
-        var configFile = new FileInfo(_malformedConfigFile);
+        ConfigurationProvider provider = new();
+        FileInfo configFile = new(_malformedConfigFile);
 
-        // Act
-        var options = provider.Build("output.txt", ["./src"], [], [], [], [], [], configFile);
+        AppOptions? options = ConfigurationProvider.Build(
+            "output.txt",
+            ["./src"],
+            [],
+            [],
+            [],
+            [],
+            [],
+            configFile);
 
-        // Assert
-        Assert.Null(options); // Should fail gracefully
+        options.Should().BeNull();
     }
 
     [Fact]
-    public void Build_WithEmptyYamlFile_DoesNotThrowAndBuildsFromCli()
+    public void Build_WithEmptyTomlFile_DoesNotThrowAndBuildsFromCli()
     {
-        // Arrange
-        var provider = new ConfigurationProvider();
-        var configFile = new FileInfo(_emptyConfigFile);
+        ConfigurationProvider provider = new();
+        FileInfo configFile = new(_emptyConfigFile);
 
-        // Act
-        var options = provider.Build("output.txt", ["./src"], [], [], [], [], [], configFile);
+        AppOptions? options = ConfigurationProvider.Build(
+            "output.txt",
+            ["./src"],
+            [],
+            [],
+            [],
+            [],
+            [],
+            configFile);
 
-        // Assert
-        Assert.NotNull(options);
-        Assert.Equal("output.txt", options.OutputFilePath);
-        Assert.Empty(options.ExcludeDirectoryNames); // An empty config file provides no defaults.
+        options.Should().NotBeNull();
+        options!.OutputFilePath.Should().Be("output.txt");
+        options.ExcludeDirectoryNames.Should().BeEmpty();
     }
 
     [Fact]
     public void Build_WhenSpecifiedConfigFileNotFound_FallsBackToDefaults()
     {
-        // Arrange
-        var provider = new ConfigurationProvider();
-        var nonExistentFile = new FileInfo("non_existent_config.yaml");
+        ConfigurationProvider provider = new();
+        FileInfo nonExistentFile = new("non_existent_config.toml");
 
-        // Act
-        var options = provider.Build("output.txt", ["./src"], [], [], [], [], [], nonExistentFile);
+        AppOptions? options = ConfigurationProvider.Build("output.txt", ["./src"], [], [], [], [], [], nonExistentFile);
 
-        // Assert
-        Assert.NotNull(options);
-        // This confirms it used the defaults/CLI args, not an empty config
-        Assert.NotEmpty(options.ExcludeDirectoryNames);
+        options.Should().NotBeNull();
+        options!.ExcludeDirectoryNames.Should().NotBeEmpty();
     }
 }

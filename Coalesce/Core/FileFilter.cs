@@ -51,7 +51,7 @@ public class FileFilter
     private bool IsExcludedFileName(string filePath)
     {
         string fileName = Path.GetFileName(filePath);
-        
+
         if (_options.ExcludeFileNames.Contains(fileName, StringComparer.OrdinalIgnoreCase))
         {
             Logger.WriteVerbose($"Skipping '{fileName}' due to 'excludeFileNames' rule.");
@@ -72,7 +72,7 @@ public class FileFilter
         }
 
         IEnumerable<string> directorySegments = pathSegments.Take(pathSegments.Length - 1);
-        
+
         foreach (string segment in directorySegments)
         {
             if (!_options.ExcludeDirectoryNames.Contains(segment, StringComparer.OrdinalIgnoreCase))
@@ -94,7 +94,7 @@ public class FileFilter
         }
 
         string fileExtension = Path.GetExtension(filePath);
-        
+
         if (_options.ExcludeExtensions.Contains(fileExtension, StringComparer.OrdinalIgnoreCase))
         {
             Logger.WriteVerbose($"Skipping '{Path.GetFileName(filePath)}' due to 'excludeExtensions' rule for '{fileExtension}'.");

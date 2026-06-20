@@ -1,4 +1,4 @@
-﻿using YamlDotNet.Serialization;
+﻿using System.Text.Json.Serialization;
 
 namespace Coalesce.Configuration;
 
@@ -8,7 +8,7 @@ public class AppOptions
 
     public List<string> SourceDirectoryPaths { get; set; } = [];
 
-    [YamlIgnore]
+    [JsonIgnore]
     public List<string> ValidSourceDirectoryPaths { get; } = [];
 
     public List<string> IncludeExtensions { get; set; } = [];

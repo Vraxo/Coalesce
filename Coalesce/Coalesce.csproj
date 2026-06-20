@@ -10,6 +10,7 @@
 
   <ItemGroup>
     <PackageReference Include="Spectre.Console.Cli" Version="0.55.0" />
+    <PackageReference Include="Tomlyn" Version="2.7.0" />
     <PackageReference Include="YamlDotNet" Version="18.0.0" />
   </ItemGroup>
 

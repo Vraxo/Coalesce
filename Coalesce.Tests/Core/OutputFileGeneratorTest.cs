@@ -1,4 +1,5 @@
-﻿using Coalesce.Configuration;
+﻿using AwesomeAssertions;
+using Coalesce.Configuration;
 using Coalesce.Core;
 using System.Text;
 using Xunit;
@@ -35,21 +36,19 @@ public class OutputFileGeneratorTests : IDisposable
 
     public void Dispose()
     {
-        if (!Directory.Exists(_tempTestRoot))
+        if (Directory.Exists(_tempTestRoot))
         {
-            return;
+            Directory.Delete(_tempTestRoot, true);
         }
-
-        Directory.Delete(_tempTestRoot, true);
+        GC.SuppressFinalize(this);
     }
 
     [Fact]
     public void WriteFileEntry_ForKnownTextFile_WritesMarkdownFormatWithLanguage()
     {
-        // Arrange
-        var stringBuilder = new StringBuilder();
-        using var stringWriter = new StringWriter(stringBuilder);
-        var generator = new OutputFileGenerator(stringWriter);
+        StringBuilder stringBuilder = new();
+        using StringWriter stringWriter = new(stringBuilder);
+        OutputFileGenerator generator = new(stringWriter);
         string relativePath = Path.GetRelativePath(Environment.CurrentDirectory, _tempCsFilePath);
         string expectedOutput = $$"""
             ### `{{relativePath}}`
@@ -60,22 +59,19 @@ public class OutputFileGeneratorTests : IDisposable
 
             """;
 
-        // Act
         generator.WriteFileEntry(_tempCsFilePath, _options);
         string result = stringBuilder.ToString().ReplaceLineEndings("\n");
         expectedOutput = expectedOutput.ReplaceLineEndings("\n");
 
-        // Assert
-        Assert.Equal(expectedOutput, result);
+        result.Should().Be(expectedOutput);
     }
 
     [Fact]
     public void WriteFileEntry_ForPathOnlyFile_WritesMarkdownFormatWithComment()
     {
-        // Arrange
-        var stringBuilder = new StringBuilder();
-        using var stringWriter = new StringWriter(stringBuilder);
-        var generator = new OutputFileGenerator(stringWriter);
+        StringBuilder stringBuilder = new();
+        using StringWriter stringWriter = new(stringBuilder);
+        OutputFileGenerator generator = new(stringWriter);
         string relativePath = Path.GetRelativePath(Environment.CurrentDirectory, _tempPngFilePath);
         string expectedOutput = $$"""
             ### `{{relativePath}}`
@@ -84,22 +80,19 @@ public class OutputFileGeneratorTests : IDisposable
 
             """;
 
-        // Act
         generator.WriteFileEntry(_tempPngFilePath, _options);
         string result = stringBuilder.ToString().ReplaceLineEndings("\n");
         expectedOutput = expectedOutput.ReplaceLineEndings("\n");
 
-        // Assert
-        Assert.Equal(expectedOutput, result);
+        result.Should().Be(expectedOutput);
     }
 
     [Fact]
     public void WriteFileEntry_ForUnknownTextFile_WritesMarkdownFormatWithoutLanguage()
     {
-        // Arrange
-        var stringBuilder = new StringBuilder();
-        using var stringWriter = new StringWriter(stringBuilder);
-        var generator = new OutputFileGenerator(stringWriter);
+        StringBuilder stringBuilder = new();
+        using StringWriter stringWriter = new(stringBuilder);
+        OutputFileGenerator generator = new(stringWriter);
         string relativePath = Path.GetRelativePath(Environment.CurrentDirectory, _tempUnknownExtFilePath);
         string expectedOutput = $$"""
             ### `{{relativePath}}`
@@ -110,12 +103,10 @@ public class OutputFileGeneratorTests : IDisposable
 
             """;
 
-        // Act
         generator.WriteFileEntry(_tempUnknownExtFilePath, _options);
         string result = stringBuilder.ToString().ReplaceLineEndings("\n");
         expectedOutput = expectedOutput.ReplaceLineEndings("\n");
 
-        // Assert
-        Assert.Equal(expectedOutput, result);
+        result.Should().Be(expectedOutput);
     }
 }
