@@ -1,5 +1,4 @@
 ﻿using Coalesce.Utils;
-using System.IO;
 using System.Reflection;
 using YamlDotNet.Core;
 using YamlDotNet.Core.Events;
@@ -83,6 +82,7 @@ public class ConfigurationProvider
     private static bool Validate(AppOptions options)
     {
         bool hasError = false;
+
         if (string.IsNullOrEmpty(options.OutputFilePath))
         {
             Logger.WriteError("Missing output file path. Please specify it as an argument or in your config file.");
@@ -117,11 +117,13 @@ public class ConfigurationProvider
                 // Fall back to embedded defaults if specified config is missing
                 return LoadDefaultOptionsFromEmbedddedResource();
             }
+
             resolvedConfigPath = configFileOption.FullName;
         }
         else
         {
             string defaultConfigPath = Path.Combine(Environment.CurrentDirectory, "coalesce.yaml");
+
             if (File.Exists(defaultConfigPath))
             {
                 resolvedConfigPath = defaultConfigPath;
@@ -198,13 +200,13 @@ public class ConfigurationProvider
                 .Build();
 
             // Consume the stream start event
-            parser.Consume<StreamStart>();
+            _ = parser.Consume<StreamStart>();
 
             // An empty file or a file with only comments is valid.
             // In this case, there are no more events after StreamStart except StreamEnd.
             if (parser.Accept(out StreamEnd _))
             {
-                return new AppOptions();
+                return new();
             }
 
             // The deserializer reads a single document.
@@ -212,7 +214,7 @@ public class ConfigurationProvider
 
             // After successfully deserializing one document, we expect the end of the stream.
             // If there is more content (e.g., a second document, or malformed text), this will fail.
-            parser.Consume<StreamEnd>();
+            _ = parser.Consume<StreamEnd>();
 
             return options;
         }

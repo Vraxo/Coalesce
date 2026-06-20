@@ -1,0 +1,43 @@
+# Default configuration for Coalesce.
+# Use 'coalesce init --preset <name>' for project-specific templates (e.g., dotnet, node).
+
+# Path for the final merged output file.
+outputFilePath: coalesce.md
+
+# List of source directories to scan for files.
+sourceDirectoryPaths:
+  - ./src
+
+# (Whitelist) To process ONLY specific file types, add their extensions here (e.g., ".cs", ".py").
+# If this list is empty, Coalesce processes ALL files not matched by other exclusion rules.
+includeExtensions: []
+
+# (Blacklist) Explicitly skip files with these extensions.
+excludeExtensions: []
+
+# Skip directories with these names (case-insensitive).
+excludeDirectoryNames:
+  - .git
+
+# Skip files with these names (case-insensitive).
+excludeFileNames:
+  - .DS_Store
+  - Thumbs.db
+  - coalesce.yaml
+
+# For these file types, only include their path in the output, not their content.
+# Useful for binary files like images, DLLs, etc.
+pathOnlyExtensions:
+  - .png
+  - .jpg
+  - .jpeg
+  - .gif
+  - .bmp
+  - .svg
+  - .ico
+  - .webp
+  - .dll
+  - .exe
+  - .so
+  - .bin
+  - .pdf

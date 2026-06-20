@@ -1,6 +1,5 @@
 ﻿using Coalesce.Configuration;
 using Coalesce.Utils;
-using System.Linq;
 
 namespace Coalesce.Core;
 
@@ -15,33 +14,50 @@ public class FileFilter
 
     public bool ShouldSkip(string filePath, string currentSourceDirectoryRoot)
     {
-        if (IsOutputFile(filePath)) return true;
-        if (IsExcludedFileName(filePath)) return true;
-        if (IsInExcludedDirectory(filePath, currentSourceDirectoryRoot)) return true;
-        if (IsExcludedByExtension(filePath)) return true;
-        if (IsMissingFromInclusionList(filePath)) return true;
+        if (IsOutputFile(filePath))
+        {
+            return true;
+        }
 
-        return false;
+        if (IsExcludedFileName(filePath))
+        {
+            return true;
+        }
+
+        if (IsInExcludedDirectory(filePath, currentSourceDirectoryRoot))
+        {
+            return true;
+        }
+
+        if (IsExcludedByExtension(filePath))
+        {
+            return true;
+        }
+
+        return IsMissingFromInclusionList(filePath);
     }
 
     private bool IsOutputFile(string filePath)
     {
-        if (string.Equals(filePath, _options.OutputFilePath, StringComparison.OrdinalIgnoreCase))
+        if (!string.Equals(filePath, _options.OutputFilePath, StringComparison.OrdinalIgnoreCase))
         {
-            Logger.WriteVerbose($"Skipping '{filePath}' because it is the output file.");
-            return true;
+            return false;
         }
-        return false;
+
+        Logger.WriteVerbose($"Skipping '{filePath}' because it is the output file.");
+        return true;
     }
 
     private bool IsExcludedFileName(string filePath)
     {
         string fileName = Path.GetFileName(filePath);
+        
         if (_options.ExcludeFileNames.Contains(fileName, StringComparer.OrdinalIgnoreCase))
         {
             Logger.WriteVerbose($"Skipping '{fileName}' due to 'excludeFileNames' rule.");
             return true;
         }
+
         return false;
     }
 
@@ -56,13 +72,16 @@ public class FileFilter
         }
 
         IEnumerable<string> directorySegments = pathSegments.Take(pathSegments.Length - 1);
+        
         foreach (string segment in directorySegments)
         {
-            if (_options.ExcludeDirectoryNames.Contains(segment, StringComparer.OrdinalIgnoreCase))
+            if (!_options.ExcludeDirectoryNames.Contains(segment, StringComparer.OrdinalIgnoreCase))
             {
-                Logger.WriteVerbose($"Skipping '{filePath}' because it's in an excluded directory ('{segment}').");
-                return true;
+                continue;
             }
+
+            Logger.WriteVerbose($"Skipping '{filePath}' because it's in an excluded directory ('{segment}').");
+            return true;
         }
         return false;
     }
@@ -75,11 +94,13 @@ public class FileFilter
         }
 
         string fileExtension = Path.GetExtension(filePath);
+        
         if (_options.ExcludeExtensions.Contains(fileExtension, StringComparer.OrdinalIgnoreCase))
         {
             Logger.WriteVerbose($"Skipping '{Path.GetFileName(filePath)}' due to 'excludeExtensions' rule for '{fileExtension}'.");
             return true;
         }
+
         return false;
     }
 
@@ -99,6 +120,7 @@ public class FileFilter
             Logger.WriteVerbose($"Skipping '{Path.GetFileName(filePath)}' because its extension ('{fileExtension}') is not in 'includeExtensions' or 'pathOnlyExtensions'.");
             return true;
         }
+
         return false;
     }
 }

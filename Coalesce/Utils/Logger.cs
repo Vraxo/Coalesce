@@ -16,7 +16,9 @@ public static class Logger
         if (verbose && quiet)
         {
             // This warning will still be displayed even in quiet mode, which is desired behavior.
-            WriteWarning("Both --quiet and --verbose flags were specified. --quiet takes precedence and verbose logs will be suppressed.");
+            WriteWarning(
+                "Both --quiet and --verbose flags were specified. " +
+                "--quiet takes precedence and verbose logs will be suppressed.");
         }
     }
 

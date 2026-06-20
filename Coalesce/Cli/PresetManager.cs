@@ -16,7 +16,7 @@ public static class PresetManager
 
         Logger.WriteInfo("Available presets:");
 
-        var customPresets = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        HashSet<string> customPresets = new(StringComparer.OrdinalIgnoreCase);
         string? presetsPath = GetPresetsDirectoryPath();
         if (presetsPath != null && Directory.Exists(presetsPath))
         {
@@ -27,7 +27,7 @@ public static class PresetManager
                     string presetName = Path.GetFileNameWithoutExtension(file);
                     if (!presetName.StartsWith('_'))
                     {
-                        customPresets.Add(presetName);
+                        _ = customPresets.Add(presetName);
                     }
                 }
             }
@@ -37,7 +37,7 @@ public static class PresetManager
             }
         }
 
-        var allPresetNames = new SortedSet<string>(customPresets, StringComparer.OrdinalIgnoreCase);
+        SortedSet<string> allPresetNames = new(customPresets, StringComparer.OrdinalIgnoreCase);
         allPresetNames.UnionWith(BuiltInPresets);
 
         foreach (var name in allPresetNames)
@@ -89,7 +89,7 @@ public static class PresetManager
         {
             if (!Directory.Exists(presetsPath))
             {
-                Directory.CreateDirectory(presetsPath);
+                _ = Directory.CreateDirectory(presetsPath);
                 Logger.WriteVerbose($"Created presets directory: {presetsPath}");
             }
 
@@ -163,11 +163,7 @@ public static class PresetManager
     private static string? GetAppDirectory()
     {
         string? exePath = Environment.ProcessPath;
-        if (string.IsNullOrEmpty(exePath))
-        {
-            return null;
-        }
-        return Path.GetDirectoryName(exePath);
+        return string.IsNullOrEmpty(exePath) ? null : Path.GetDirectoryName(exePath);
     }
 
     private static string GetEmbeddedResource(string resourceName)
@@ -177,7 +173,10 @@ public static class PresetManager
 
         if (stream == null)
         {
-            throw new FileNotFoundException($"Could not find embedded resource '{resourceName}'. Make sure the file's 'Build Action' is 'Embedded Resource' and the name is correct.", resourceName);
+            throw new FileNotFoundException(
+                $"Could not find embedded resource '{resourceName}'. " +
+                $"Make sure the file's 'Build Action' is 'Embedded Resource' and the name is correct.",
+                resourceName);
         }
 
         using StreamReader reader = new(stream);

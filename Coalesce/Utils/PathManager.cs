@@ -31,6 +31,7 @@ public static class PathManager
     private static string? GetExecutableDirectory()
     {
         string? exePath = Environment.ProcessPath;
+
         if (string.IsNullOrEmpty(exePath))
         {
             Logger.WriteError("Could not determine the application's path.");
@@ -43,6 +44,7 @@ public static class PathManager
     private static void InstallOnWindows()
     {
         string? appDirectory = GetExecutableDirectory();
+
         if (appDirectory == null)
         {
             return;
@@ -78,6 +80,7 @@ public static class PathManager
     private static void UninstallOnWindows()
     {
         string? appDirectory = GetExecutableDirectory();
+
         if (appDirectory == null)
         {
             return;

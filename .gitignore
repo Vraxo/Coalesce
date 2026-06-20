@@ -8,7 +8,7 @@
 # --- Build Output (The MOST IMPORTANT Rule) ---
 # Ignore the entire directory where all compiled code, intermediate files,
 # and other build artifacts are now stored.
-/_artifacts/
+/artifacts/
 
 # --- User-specific Settings ---
 # These files store your personal workspace settings, window layouts, etc.

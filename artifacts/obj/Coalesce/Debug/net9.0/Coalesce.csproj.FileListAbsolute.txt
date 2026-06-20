@@ -1,0 +1,17 @@
+E:\Parsa Stuff\Visual Studio\Coalesce\_artifacts\bin\Debug\net9.0\Coalesce.exe
+E:\Parsa Stuff\Visual Studio\Coalesce\_artifacts\bin\Debug\net9.0\Coalesce.deps.json
+E:\Parsa Stuff\Visual Studio\Coalesce\_artifacts\bin\Debug\net9.0\Coalesce.runtimeconfig.json
+E:\Parsa Stuff\Visual Studio\Coalesce\_artifacts\bin\Debug\net9.0\Coalesce.dll
+E:\Parsa Stuff\Visual Studio\Coalesce\_artifacts\bin\Debug\net9.0\Coalesce.pdb
+E:\Parsa Stuff\Visual Studio\Coalesce\_artifacts\obj\Coalesce\Debug\net9.0\Coalesce.csproj.AssemblyReference.cache
+E:\Parsa Stuff\Visual Studio\Coalesce\_artifacts\obj\Coalesce\Debug\net9.0\Coalesce.GeneratedMSBuildEditorConfig.editorconfig
+E:\Parsa Stuff\Visual Studio\Coalesce\_artifacts\obj\Coalesce\Debug\net9.0\Coalesce.AssemblyInfoInputs.cache
+E:\Parsa Stuff\Visual Studio\Coalesce\_artifacts\obj\Coalesce\Debug\net9.0\Coalesce.AssemblyInfo.cs
+E:\Parsa Stuff\Visual Studio\Coalesce\_artifacts\obj\Coalesce\Debug\net9.0\Coalesce.csproj.CoreCompileInputs.cache
+E:\Parsa Stuff\Visual Studio\Coalesce\_artifacts\obj\Coalesce\Debug\net9.0\Coalesce.sourcelink.json
+E:\Parsa Stuff\Visual Studio\Coalesce\_artifacts\obj\Coalesce\Debug\net9.0\Coalesce.csproj.Up2Date
+E:\Parsa Stuff\Visual Studio\Coalesce\_artifacts\obj\Coalesce\Debug\net9.0\Coalesce.dll
+E:\Parsa Stuff\Visual Studio\Coalesce\_artifacts\obj\Coalesce\Debug\net9.0\refint\Coalesce.dll
+E:\Parsa Stuff\Visual Studio\Coalesce\_artifacts\obj\Coalesce\Debug\net9.0\Coalesce.pdb
+E:\Parsa Stuff\Visual Studio\Coalesce\_artifacts\obj\Coalesce\Debug\net9.0\Coalesce.genruntimeconfig.cache
+E:\Parsa Stuff\Visual Studio\Coalesce\_artifacts\obj\Coalesce\Debug\net9.0\ref\Coalesce.dll

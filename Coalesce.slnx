@@ -1,0 +1,7 @@
+<Solution>
+  <Folder Name="/Solution Items/">
+    <File Path=".editorconfig" />
+  </Folder>
+  <Project Path="Coalesce.Tests/Coalesce.Tests.csproj" />
+  <Project Path="Coalesce/Coalesce.csproj" />
+</Solution>

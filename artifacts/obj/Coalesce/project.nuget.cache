@@ -1,0 +1,13 @@
+{
+  "version": 2,
+  "dgSpecHash": "0Ug2x6hRRiM=",
+  "success": true,
+  "projectFilePath": "E:\\Visual Studio\\Coalesce\\Coalesce\\Coalesce.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\Parsa\\.nuget\\packages\\spectre.console\\0.55.0\\spectre.console.0.55.0.nupkg.sha512",
+    "C:\\Users\\Parsa\\.nuget\\packages\\spectre.console.ansi\\0.55.0\\spectre.console.ansi.0.55.0.nupkg.sha512",
+    "C:\\Users\\Parsa\\.nuget\\packages\\spectre.console.cli\\0.55.0\\spectre.console.cli.0.55.0.nupkg.sha512",
+    "C:\\Users\\Parsa\\.nuget\\packages\\yamldotnet\\18.0.0\\yamldotnet.18.0.0.nupkg.sha512"
+  ],
+  "logs": []
+}
