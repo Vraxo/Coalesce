@@ -25,20 +25,20 @@ public class MergeCommand : Command<MergeSettings>
             [.. settings.PathOnlyExt],
             configFile);
 
-        if (options is not null)
+        if (options is null)
         {
-            try
-            {
-                new DirectoryMerger(options, settings.DryRun).Merge();
-                return 0;
-            }
-            catch (Exception ex)
-            {
-                Logger.WriteError($"An unexpected error occurred: {ex.Message}");
-                return 1;
-            }
+            return 1;
         }
 
-        return 1;
+        try
+        {
+            new DirectoryMerger(options, settings.DryRun).Merge();
+            return 0;
+        }
+        catch (Exception ex)
+        {
+            Logger.WriteError($"An unexpected error occurred: {ex.Message}");
+            return 1;
+        }
     }
 }

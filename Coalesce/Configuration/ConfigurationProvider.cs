@@ -158,12 +158,9 @@ public class ConfigurationProvider
     private static string GetEmbeddedResource(string resourceName)
     {
         Assembly assembly = Assembly.GetExecutingAssembly();
-        using Stream? stream = assembly.GetManifestResourceStream(resourceName);
 
-        if (stream == null)
-        {
-            throw new FileNotFoundException($"Could not find embedded resource '{resourceName}'.", resourceName);
-        }
+        using Stream? stream = assembly.GetManifestResourceStream(resourceName)
+            ?? throw new FileNotFoundException($"Could not find embedded resource '{resourceName}'.", resourceName);
 
         using StreamReader reader = new(stream);
         return reader.ReadToEnd();
@@ -178,8 +175,7 @@ public class ConfigurationProvider
 
         try
         {
-            AppOptions? deserialized = TomlSerializer.Deserialize<AppOptions>(tomlContent);
-            return deserialized ?? new AppOptions();
+            return TomlSerializer.Deserialize<AppOptions>(tomlContent, CoalesceTomlContext.Default.AppOptions);
         }
         catch (Exception ex)
         {
