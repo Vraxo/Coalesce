@@ -22,8 +22,8 @@ internal static class Program
                 preset.AddCommand<PresetPathCommand>("path");
             });
 
-            config.AddCommand<InstallPathCommand>("install-path");
-            config.AddCommand<UninstallPathCommand>("uninstall-path");
+            config.AddCommand<InstallCommand>("install");
+            config.AddCommand<UninstallCommand>("uninstall");
         });
 
         return await app.RunAsync(args);

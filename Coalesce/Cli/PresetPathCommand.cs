@@ -1,10 +1,12 @@
 ﻿using Spectre.Console.Cli;
+using System.ComponentModel;
 
 namespace Coalesce.Cli;
 
-public sealed class PresetPathCommand : Command<CommandSettings>
+[Description("Show the directory path where presets are stored.")]
+public sealed class PresetPathCommand : Command<EmptyCommandSettings>
 {
-    protected override int Execute(CommandContext context, CommandSettings settings, CancellationToken cancellationToken)
+    protected override int Execute(CommandContext context, EmptyCommandSettings settings, CancellationToken cancellationToken)
     {
         PresetManager.ShowPath();
         return 0;

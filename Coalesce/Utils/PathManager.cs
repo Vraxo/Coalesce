@@ -9,11 +9,10 @@ public static class PathManager
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
         {
             InstallOnWindows();
+            return;
         }
-        else
-        {
-            DisplayInstallInstructionsOnUnix();
-        }
+
+        DisplayInstallInstructionsOnUnix();
     }
 
     public static void Uninstall()
@@ -97,7 +96,7 @@ public static class PathManager
         List<string> paths = [.. currentPath.Split(';')];
         int initialCount = paths.Count;
 
-        _ = paths.RemoveAll(p => string.Equals(p, appDirectory, StringComparison.OrdinalIgnoreCase));
+        paths.RemoveAll(p => string.Equals(p, appDirectory, StringComparison.OrdinalIgnoreCase));
 
         if (paths.Count == initialCount)
         {

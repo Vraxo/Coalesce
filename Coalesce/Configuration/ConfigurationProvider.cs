@@ -177,7 +177,7 @@ public static class ConfigurationProvider
     {
         if (string.IsNullOrWhiteSpace(tomlContent))
         {
-            return new AppOptions();
+            return new();
         }
 
         try
