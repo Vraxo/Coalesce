@@ -5,7 +5,7 @@ using Spectre.Console.Cli;
 
 namespace Coalesce.Cli;
 
-public class MergeCommand : Command<MergeSettings>
+public sealed class MergeCommand : Command<MergeSettings>
 {
     protected override int Execute(CommandContext context, MergeSettings settings, CancellationToken cancellationToken)
     {

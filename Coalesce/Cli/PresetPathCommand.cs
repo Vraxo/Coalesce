@@ -2,7 +2,7 @@
 
 namespace Coalesce.Cli;
 
-public class PresetPathCommand : Command<CommandSettings>
+public sealed class PresetPathCommand : Command<CommandSettings>
 {
     protected override int Execute(CommandContext context, CommandSettings settings, CancellationToken cancellationToken)
     {

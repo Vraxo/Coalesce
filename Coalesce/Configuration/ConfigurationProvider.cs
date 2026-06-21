@@ -1,15 +1,9 @@
 ﻿using Coalesce.Utils;
 using Tomlyn;
-using Tomlyn.Serialization;
 
 namespace Coalesce.Configuration;
 
-[TomlSerializable(typeof(AppOptions))]
-internal partial class CoalesceTomlContext : TomlSerializerContext
-{
-}
-
-public class ConfigurationProvider
+public static class ConfigurationProvider
 {
     public static AppOptions? Build(string? outputArg, List<string> sourceArgs, List<string> excludeDirOptions, List<string> excludeFileOptions, List<string> includeExtOptions, List<string> excludeExtOptions, List<string> pathOnlyExtOptions, FileInfo? configFileOption)
     {
@@ -19,7 +13,15 @@ public class ConfigurationProvider
             return null;
         }
 
-        ApplyCommandLineOverrides(options, outputArg, sourceArgs, excludeDirOptions, excludeFileOptions, includeExtOptions, excludeExtOptions, pathOnlyExtOptions);
+        ApplyCommandLineOverrides(
+            options,
+            outputArg,
+            sourceArgs,
+            excludeDirOptions,
+            excludeFileOptions,
+            includeExtOptions,
+            excludeExtOptions,
+            pathOnlyExtOptions);
 
         if (!Validate(options))
         {
@@ -65,10 +67,12 @@ public class ConfigurationProvider
         Log.Verbose($"Adding to '{optionName}' from CLI arguments.");
         foreach (string option in cliOptions)
         {
-            if (!targetList.Contains(option, StringComparer.OrdinalIgnoreCase))
+            if (targetList.Contains(option, StringComparer.OrdinalIgnoreCase))
             {
-                targetList.Add(option);
+                continue;
             }
+
+            targetList.Add(option);
         }
     }
 
@@ -78,13 +82,19 @@ public class ConfigurationProvider
 
         if (string.IsNullOrEmpty(options.OutputFilePath))
         {
-            Log.Error("Missing output file path. Please specify it as an argument or in your config file.");
+            Log.Error(
+                "Missing output file path. " +
+                "Please specify it as an argument or in your config file.");
+
             hasError = true;
         }
 
         if (options.SourceDirectoryPaths.Count == 0)
         {
-            Log.Error("Missing source directories. Please provide at least one source directory as an argument or in your config file.");
+            Log.Error("" +
+                "Missing source directories. " +
+                "Please provide at least one source directory as an argument or in your config file.");
+
             hasError = true;
         }
 
@@ -102,7 +112,16 @@ public class ConfigurationProvider
     {
         string? resolvedConfigPath = null;
 
-        if (configFileOption is not null)
+        if (configFileOption is null)
+        {
+            string defaultConfigPath = Path.Combine(Environment.CurrentDirectory, "coalesce.toml");
+
+            if (File.Exists(defaultConfigPath))
+            {
+                resolvedConfigPath = defaultConfigPath;
+            }
+        }
+        else
         {
             if (!configFileOption.Exists)
             {
@@ -112,15 +131,6 @@ public class ConfigurationProvider
 
             resolvedConfigPath = configFileOption.FullName;
         }
-        else
-        {
-            string defaultConfigPath = Path.Combine(Environment.CurrentDirectory, "coalesce.toml");
-
-            if (File.Exists(defaultConfigPath))
-            {
-                resolvedConfigPath = defaultConfigPath;
-            }
-        }
 
         if (resolvedConfigPath is not null)
         {
@@ -128,7 +138,10 @@ public class ConfigurationProvider
             return LoadOptionsFromTomlFile(resolvedConfigPath);
         }
 
-        Log.Verbose("No 'coalesce.toml' found. Using built-in default configuration.");
+        Log.Verbose(
+            "No 'coalesce.toml' found. " +
+            "Using built-in default configuration.");
+
         return LoadDefaultOptionsFromEmbedded();
     }
 

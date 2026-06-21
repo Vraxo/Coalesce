@@ -3,7 +3,7 @@ using System.ComponentModel;
 
 namespace Coalesce.Cli;
 
-public class MergeSettings : CommandSettings
+public sealed class MergeSettings : CommandSettings
 {
     [CommandArgument(0, "[output-file]")]
     [Description("Path for the merged output file. Required if not in config.")]

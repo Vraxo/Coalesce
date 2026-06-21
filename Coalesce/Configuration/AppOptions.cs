@@ -2,7 +2,7 @@
 
 namespace Coalesce.Configuration;
 
-public class AppOptions
+public sealed class AppOptions
 {
     public string OutputFilePath { get; set; } = string.Empty;
 

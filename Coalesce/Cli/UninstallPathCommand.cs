@@ -3,7 +3,7 @@ using Spectre.Console.Cli;
 
 namespace Coalesce.Cli;
 
-public class UninstallPathCommand : Command<CommandSettings>
+public sealed class UninstallPathCommand : Command<CommandSettings>
 {
     protected override int Execute(CommandContext context, CommandSettings settings, CancellationToken cancellationToken)
     {

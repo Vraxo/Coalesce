@@ -3,7 +3,7 @@ using Spectre.Console.Cli;
 
 namespace Coalesce.Cli;
 
-public class InitCommand : Command<InitSettings>
+public sealed class InitCommand : Command<InitSettings>
 {
     protected override int Execute(CommandContext context, InitSettings settings, CancellationToken cancellationToken)
     {
