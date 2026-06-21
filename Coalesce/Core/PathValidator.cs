@@ -16,7 +16,7 @@ public static class PathValidator
 
         if (options.ValidSourceDirectoryPaths.Count == 0)
         {
-            Logger.WriteError("No valid source directories were provided or found.");
+            Log.Error("No valid source directories were provided or found.");
             return false;
         }
 
@@ -30,7 +30,7 @@ public static class PathValidator
 
         if (string.IsNullOrEmpty(outputDirectory) || !Directory.Exists(outputDirectory))
         {
-            Logger.WriteError($"Output directory not found: '{outputDirectory}'. Please ensure the directory exists.");
+            Log.Error($"Output directory not found: '{outputDirectory}'. Please ensure the directory exists.");
             return false;
         }
         return true;
@@ -45,11 +45,11 @@ public static class PathValidator
             if (Directory.Exists(fullSourcePath))
             {
                 options.ValidSourceDirectoryPaths.Add(fullSourcePath);
-                Logger.WriteInfo($"- Added Source Directory: {fullSourcePath}");
+                Log.Info($"- Added Source Directory: {fullSourcePath}");
             }
             else
             {
-                Logger.WriteWarning($"Source directory not found: '{fullSourcePath}'. Skipping.");
+                Log.Warning($"Source directory not found: '{fullSourcePath}'. Skipping.");
             }
         }
     }

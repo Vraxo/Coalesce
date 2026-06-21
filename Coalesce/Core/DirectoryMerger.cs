@@ -18,7 +18,7 @@ public class DirectoryMerger
     {
         if (!PathValidator.TryValidateAndPrepare(_options))
         {
-            Logger.WriteSuggestion("\nRun 'coalesce --help' for a list of commands and options.");
+            Log.Suggestion("\nRun 'coalesce --help' for a list of commands and options.");
             return;
         }
 
@@ -34,8 +34,8 @@ public class DirectoryMerger
 
     private void ExecuteDryRun()
     {
-        Logger.WriteWarning("--- DRY RUN MODE ---");
-        Logger.WriteInfo("The following files would be included in the merge output:");
+        Log.Warning("--- DRY RUN MODE ---");
+        Log.Info("The following files would be included in the merge output:");
 
         SourceFileProvider fileProvider = new(_options);
         int totalFilesProcessed = 0;
@@ -44,12 +44,12 @@ public class DirectoryMerger
         {
             foreach (string filePath in fileProvider.EnumerateEligibleFiles(sourceDirectory))
             {
-                Logger.WriteInfo($"- {filePath}");
+                Log.Info($"- {filePath}");
                 totalFilesProcessed++;
             }
         }
 
-        Logger.WriteInfo(string.Empty);
+        Log.Info(string.Empty);
         PrintSummary(totalFilesProcessed, 0);
     }
 
@@ -58,17 +58,17 @@ public class DirectoryMerger
         try
         {
             SafelyDeleteFile(_options.OutputFilePath);
-            Logger.WriteInfo($"Starting merge process. Output will be saved to: {_options.OutputFilePath}");
+            Log.Info($"Starting merge process. Output will be saved to: {_options.OutputFilePath}");
 
             using StreamWriter writer = new(_options.OutputFilePath);
             (int processed, int skipped) = ProcessAllSources(writer);
 
-            Logger.WriteInfo(string.Empty);
+            Log.Info(string.Empty);
             PrintSummary(processed, skipped);
         }
         catch (Exception ex)
         {
-            Logger.WriteError($"A critical error occurred during the merge process: {ex.Message}");
+            Log.Error($"A critical error occurred during the merge process: {ex.Message}");
         }
     }
 
@@ -82,7 +82,7 @@ public class DirectoryMerger
 
         foreach (string sourceDirectory in _options.ValidSourceDirectoryPaths)
         {
-            Logger.WriteInfo($"\n--- Processing Source: {sourceDirectory} ---");
+            Log.Info($"\n--- Processing Source: {sourceDirectory} ---");
 
             foreach (string filePath in fileProvider.EnumerateEligibleFiles(sourceDirectory))
             {
@@ -93,7 +93,7 @@ public class DirectoryMerger
                 }
                 catch (IOException ex)
                 {
-                    Logger.WriteWarning(ex.Message);
+                    Log.Warning(ex.Message);
                     totalFilesSkipped++;
                 }
             }
@@ -108,11 +108,11 @@ public class DirectoryMerger
         {
             if (totalFilesProcessed > 0)
             {
-                Logger.WriteSuccess($"Dry run complete. Found {totalFilesProcessed} files to include.");
+                Log.Success($"Dry run complete. Found {totalFilesProcessed} files to include.");
             }
             else
             {
-                Logger.WriteWarning("Dry run complete. No eligible files were found.");
+                Log.Warning("Dry run complete. No eligible files were found.");
             }
             return;
         }
@@ -120,16 +120,16 @@ public class DirectoryMerger
         if (totalFilesProcessed > 0)
         {
             int sourceCount = _options.ValidSourceDirectoryPaths.Count;
-            Logger.WriteSuccess($"Merging complete. Processed {totalFilesProcessed} files across {sourceCount} source directories.");
+            Log.Success($"Merging complete. Processed {totalFilesProcessed} files across {sourceCount} source directories.");
         }
         else
         {
-            Logger.WriteWarning("No eligible files were found in the provided source directories.");
+            Log.Warning("No eligible files were found in the provided source directories.");
         }
 
         if (totalFilesSkipped > 0)
         {
-            Logger.WriteInfo($"Skipped {totalFilesSkipped} files (unreadable, excluded, or output file itself).");
+            Log.Info($"Skipped {totalFilesSkipped} files (unreadable, excluded, or output file itself).");
         }
     }
 
@@ -140,12 +140,12 @@ public class DirectoryMerger
             if (File.Exists(filePath))
             {
                 File.Delete(filePath);
-                Logger.WriteInfo($"Deleted existing output file: {filePath}");
+                Log.Info($"Deleted existing output file: {filePath}");
             }
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
-            Logger.WriteWarning($"Could not delete existing file '{filePath}'. It might be locked or protected. Error: {ex.Message}");
+            Log.Warning($"Could not delete existing file '{filePath}'. It might be locked or protected. Error: {ex.Message}");
         }
     }
 }

@@ -33,19 +33,19 @@ public class ConfigurationProvider
     {
         if (!string.IsNullOrEmpty(outputArg))
         {
-            Logger.WriteVerbose($"Overriding 'OutputFilePath' with CLI argument: '{outputArg}'");
+            Log.Verbose($"Overriding 'OutputFilePath' with CLI argument: '{outputArg}'");
             options.OutputFilePath = outputArg!;
         }
 
         if (sourceArgs.Count > 0)
         {
-            Logger.WriteVerbose("Overriding 'SourceDirectoryPaths' with CLI arguments.");
+            Log.Verbose("Overriding 'SourceDirectoryPaths' with CLI arguments.");
             options.SourceDirectoryPaths = sourceArgs;
         }
 
         if (includeExtOptions.Count > 0)
         {
-            Logger.WriteVerbose("Replacing 'IncludeExtensions' with CLI arguments.");
+            Log.Verbose("Replacing 'IncludeExtensions' with CLI arguments.");
             options.IncludeExtensions = includeExtOptions;
         }
 
@@ -62,7 +62,7 @@ public class ConfigurationProvider
             return;
         }
 
-        Logger.WriteVerbose($"Adding to '{optionName}' from CLI arguments.");
+        Log.Verbose($"Adding to '{optionName}' from CLI arguments.");
         foreach (string option in cliOptions)
         {
             if (!targetList.Contains(option, StringComparer.OrdinalIgnoreCase))
@@ -78,20 +78,20 @@ public class ConfigurationProvider
 
         if (string.IsNullOrEmpty(options.OutputFilePath))
         {
-            Logger.WriteError("Missing output file path. Please specify it as an argument or in your config file.");
+            Log.Error("Missing output file path. Please specify it as an argument or in your config file.");
             hasError = true;
         }
 
         if (options.SourceDirectoryPaths.Count == 0)
         {
-            Logger.WriteError("Missing source directories. Please provide at least one source directory as an argument or in your config file.");
+            Log.Error("Missing source directories. Please provide at least one source directory as an argument or in your config file.");
             hasError = true;
         }
 
         if (hasError)
         {
-            Logger.WriteError("Example: coalesce coalesce.md ./src");
-            Logger.WriteSuggestion("\nRun 'coalesce --help' for a list of commands and options.");
+            Log.Error("Example: coalesce coalesce.md ./src");
+            Log.Suggestion("\nRun 'coalesce --help' for a list of commands and options.");
             return false;
         }
 
@@ -106,7 +106,7 @@ public class ConfigurationProvider
         {
             if (!configFileOption.Exists)
             {
-                Logger.WriteWarning($"Configuration file specified via --config not found: {configFileOption.FullName}");
+                Log.Warning($"Configuration file specified via --config not found: {configFileOption.FullName}");
                 return LoadDefaultOptionsFromEmbedded();
             }
 
@@ -124,11 +124,11 @@ public class ConfigurationProvider
 
         if (resolvedConfigPath is not null)
         {
-            Logger.WriteInfo($"Loading configuration from: {resolvedConfigPath}");
+            Log.Info($"Loading configuration from: {resolvedConfigPath}");
             return LoadOptionsFromTomlFile(resolvedConfigPath);
         }
 
-        Logger.WriteVerbose("No 'coalesce.toml' found. Using built-in default configuration.");
+        Log.Verbose("No 'coalesce.toml' found. Using built-in default configuration.");
         return LoadDefaultOptionsFromEmbedded();
     }
 
@@ -141,7 +141,7 @@ public class ConfigurationProvider
         }
         catch (Exception ex)
         {
-            Logger.WriteError($"Error loading or parsing config file '{configPath}': {ex.Message}");
+            Log.Error($"Error loading or parsing config file '{configPath}': {ex.Message}");
             return null;
         }
     }
@@ -155,7 +155,7 @@ public class ConfigurationProvider
         }
         catch (Exception ex)
         {
-            Logger.WriteError($"FATAL: Could not load the built-in default configuration. {ex.Message}");
+            Log.Error($"FATAL: Could not load the built-in default configuration. {ex.Message}");
             return null;
         }
     }

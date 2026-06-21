@@ -30,8 +30,8 @@ public static class ConfigurationGenerator
 
         if (tomlContent is null)
         {
-            Logger.WriteError($"Preset '{presetName}' not found.");
-            Logger.WriteSuggestion("Run 'coalesce preset list' to see all available presets.");
+            Log.Error($"Preset '{presetName}' not found.");
+            Log.Suggestion("Run 'coalesce preset list' to see all available presets.");
         }
         else
         {
@@ -54,19 +54,19 @@ public static class ConfigurationGenerator
 
         if (File.Exists(filePath))
         {
-            Logger.WriteWarning($"Configuration file '{DefaultConfigFileName}' already exists. Generation skipped.");
-            Logger.WriteInfo(filePath);
+            Log.Warning($"Configuration file '{DefaultConfigFileName}' already exists. Generation skipped.");
+            Log.Info(filePath);
             return;
         }
 
         try
         {
             File.WriteAllText(filePath, tomlContent);
-            Logger.WriteSuccess($"Created configuration file from {sourceName}: {filePath}");
+            Log.Success($"Created configuration file from {sourceName}: {filePath}");
         }
         catch (Exception ex)
         {
-            Logger.WriteError($"Failed to generate '{DefaultConfigFileName}': {ex.Message}");
+            Log.Error($"Failed to generate '{DefaultConfigFileName}': {ex.Message}");
         }
     }
 
@@ -89,23 +89,23 @@ public static class ConfigurationGenerator
 
         if (File.Exists(filePath))
         {
-            Logger.WriteWarning($"Script file '{fileName}' already exists. Generation skipped.");
-            Logger.WriteInfo(filePath);
+            Log.Warning($"Script file '{fileName}' already exists. Generation skipped.");
+            Log.Info(filePath);
             return;
         }
 
         try
         {
             File.WriteAllText(filePath, content);
-            Logger.WriteSuccess($"Created {scriptType}: {filePath}");
+            Log.Success($"Created {scriptType}: {filePath}");
             if (postGenerationInfo is not null)
             {
-                Logger.WriteInfo(postGenerationInfo);
+                Log.Info(postGenerationInfo);
             }
         }
         catch (Exception ex)
         {
-            Logger.WriteError($"Failed to generate '{fileName}': {ex.Message}");
+            Log.Error($"Failed to generate '{fileName}': {ex.Message}");
         }
     }
 }

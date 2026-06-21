@@ -21,11 +21,10 @@ public static class PathManager
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
         {
             UninstallOnWindows();
+            return;
         }
-        else
-        {
-            DisplayUninstallInstructionsOnUnix();
-        }
+
+        DisplayUninstallInstructionsOnUnix();
     }
 
     private static string? GetExecutableDirectory()
@@ -34,7 +33,7 @@ public static class PathManager
 
         if (string.IsNullOrEmpty(exePath))
         {
-            Logger.WriteError("Could not determine the application's path.");
+            Log.Error("Could not determine the application's path.");
             return null;
         }
 
@@ -57,7 +56,7 @@ public static class PathManager
 
         if (paths.Contains(appDirectory, StringComparer.OrdinalIgnoreCase))
         {
-            Logger.WriteInfo($"Coalesce is already in your user PATH: {appDirectory}");
+            Log.Info($"Coalesce is already in your user PATH: {appDirectory}");
             return;
         }
 
@@ -67,13 +66,13 @@ public static class PathManager
             string newPath = string.Join(';', paths);
             Environment.SetEnvironmentVariable("PATH", newPath, scope);
 
-            Logger.WriteSuccess("Successfully added Coalesce to user PATH.");
-            Logger.WriteInfo("Please restart your terminal for the changes to take effect.");
+            Log.Success("Successfully added Coalesce to user PATH.");
+            Log.Info("Please restart your terminal for the changes to take effect.");
         }
         catch (Exception ex)
         {
-            Logger.WriteError($"Failed to update PATH: {ex.Message}");
-            Logger.WriteSuggestion("You may need to run this command with administrator privileges or update the PATH manually.");
+            Log.Error($"Failed to update PATH: {ex.Message}");
+            Log.Suggestion("You may need to run this command with administrator privileges or update the PATH manually.");
         }
     }
 
@@ -91,7 +90,7 @@ public static class PathManager
 
         if (string.IsNullOrEmpty(currentPath))
         {
-            Logger.WriteInfo("User PATH variable is empty. Nothing to do.");
+            Log.Info("User PATH variable is empty. Nothing to do.");
             return;
         }
 
@@ -102,7 +101,7 @@ public static class PathManager
 
         if (paths.Count == initialCount)
         {
-            Logger.WriteInfo("Coalesce was not found in your user PATH.");
+            Log.Info("Coalesce was not found in your user PATH.");
             return;
         }
 
@@ -111,12 +110,12 @@ public static class PathManager
             string newPath = string.Join(";", paths);
             Environment.SetEnvironmentVariable("PATH", newPath, scope);
 
-            Logger.WriteSuccess("Successfully removed Coalesce from user PATH.");
-            Logger.WriteInfo("Please restart your terminal for the changes to take effect.");
+            Log.Success("Successfully removed Coalesce from user PATH.");
+            Log.Info("Please restart your terminal for the changes to take effect.");
         }
         catch (Exception ex)
         {
-            Logger.WriteError($"Failed to update PATH: {ex.Message}");
+            Log.Error($"Failed to update PATH: {ex.Message}");
         }
     }
 
@@ -125,7 +124,7 @@ public static class PathManager
         string? exePath = Environment.ProcessPath;
         if (string.IsNullOrEmpty(exePath))
         {
-            Logger.WriteError("Could not determine the application's path.");
+            Log.Error("Could not determine the application's path.");
             return;
         }
 
@@ -134,26 +133,28 @@ public static class PathManager
 
         if (string.IsNullOrEmpty(appDirectory) || string.IsNullOrEmpty(exeName))
         {
-            Logger.WriteError("Could not determine the application's path details.");
+            Log.Error("Could not determine the application's path details.");
             return;
         }
 
-        Logger.WriteInfo("Automatic PATH installation is not supported on this OS.");
-        Logger.WriteInfo("Please add the application directory to your PATH manually.");
-        Logger.WriteSuggestion("\nOption 1: Add to your shell profile (e.g., ~/.bashrc, ~/.zshrc)");
-        Logger.WriteInfo($"  export PATH=\"$PATH:{appDirectory}\"");
-        Logger.WriteSuggestion("\nOption 2: Create a symbolic link to a directory in your PATH");
-        Logger.WriteInfo($"  sudo ln -s \"{exePath}\" /usr/local/bin/{exeName}");
-        Logger.WriteInfo("\nAfter running one of the commands, restart your terminal.");
+        Log.Info("Automatic PATH installation is not supported on this OS.");
+        Log.Info("Please add the application directory to your PATH manually.");
+        Log.Suggestion("\nOption 1: Add to your shell profile (e.g., ~/.bashrc, ~/.zshrc)");
+        Log.Info($"  export PATH=\"$PATH:{appDirectory}\"");
+        Log.Suggestion("\nOption 2: Create a symbolic link to a directory in your PATH");
+        Log.Info($"  sudo ln -s \"{exePath}\" /usr/local/bin/{exeName}");
+        Log.Info("\nAfter running one of the commands, restart your terminal.");
     }
 
     private static void DisplayUninstallInstructionsOnUnix()
     {
         string? exePath = Environment.ProcessPath;
-        string exeName = !string.IsNullOrEmpty(exePath) ? Path.GetFileName(exePath) : "coalesce";
+        string exeName = !string.IsNullOrEmpty(exePath)
+            ? Path.GetFileName(exePath)
+            : "coalesce";
 
-        Logger.WriteInfo("To uninstall, please reverse the steps you took to install.");
-        Logger.WriteSuggestion("1. Remove the 'export PATH...' line from your shell profile.");
-        Logger.WriteSuggestion($"2. Or, delete the symbolic link: sudo rm /usr/local/bin/{exeName}");
+        Log.Info("To uninstall, please reverse the steps you took to install.");
+        Log.Suggestion("1. Remove the 'export PATH...' line from your shell profile.");
+        Log.Suggestion($"2. Or, delete the symbolic link: sudo rm /usr/local/bin/{exeName}");
     }
 }

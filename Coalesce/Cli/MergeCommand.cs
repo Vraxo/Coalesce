@@ -9,7 +9,7 @@ public class MergeCommand : Command<MergeSettings>
 {
     protected override int Execute(CommandContext context, MergeSettings settings, CancellationToken cancellationToken)
     {
-        Logger.Initialize(settings.Quiet, settings.Verbose);
+        Log.Initialize(settings.Quiet, settings.Verbose);
 
         FileInfo? configFile = !string.IsNullOrEmpty(settings.Config) ? new FileInfo(settings.Config) : null;
 
@@ -35,7 +35,7 @@ public class MergeCommand : Command<MergeSettings>
         }
         catch (Exception ex)
         {
-            Logger.WriteError($"An unexpected error occurred: {ex.Message}");
+            Log.Error($"An unexpected error occurred: {ex.Message}");
             return 1;
         }
     }

@@ -1,28 +1,28 @@
 ﻿namespace Coalesce.Utils;
 
-public static class Logger
+public static class Log
 {
-    private static bool _quietMode;
-    private static bool _verboseMode;
+    private static bool _quiet;
+    private static bool _verbose;
     private static bool _noColor;
 
     public static void Initialize(bool quiet, bool verbose = false)
     {
-        _quietMode = quiet;
-        // Verbose is disabled if quiet is enabled. This simplifies checks in other logging methods.
-        _verboseMode = verbose && !quiet;
+        _quiet = quiet;
+        _verbose = verbose && !quiet;
         _noColor = Console.IsOutputRedirected;
 
-        if (verbose && quiet)
+        if (!verbose || !quiet)
         {
-            // This warning will still be displayed even in quiet mode, which is desired behavior.
-            WriteWarning(
-                "Both --quiet and --verbose flags were specified. " +
-                "--quiet takes precedence and verbose logs will be suppressed.");
+            return;
         }
+
+        Warning(
+            "Both --quiet and --verbose flags were specified. " +
+            "--quiet takes precedence and verbose logs will be suppressed.");
     }
 
-    public static void WriteError(string message)
+    public static void Error(string message)
     {
         if (_noColor)
         {
@@ -35,7 +35,7 @@ public static class Logger
         Console.ResetColor();
     }
 
-    public static void WriteWarning(string message)
+    public static void Warning(string message)
     {
         if (_noColor)
         {
@@ -48,9 +48,9 @@ public static class Logger
         Console.ResetColor();
     }
 
-    public static void WriteSuccess(string message)
+    public static void Success(string message)
     {
-        if (_quietMode)
+        if (_quiet)
         {
             return;
         }
@@ -66,9 +66,9 @@ public static class Logger
         Console.ResetColor();
     }
 
-    public static void WriteInfo(string message)
+    public static void Info(string message)
     {
-        if (_quietMode)
+        if (_quiet)
         {
             return;
         }
@@ -76,15 +76,15 @@ public static class Logger
         Console.WriteLine(message);
     }
 
-    public static void WriteSuggestion(string message)
+    public static void Suggestion(string message)
     {
         // Not suppressed by quiet mode as it follows an error.
         Console.WriteLine(message);
     }
 
-    public static void WriteVerbose(string message)
+    public static void Verbose(string message)
     {
-        if (!_verboseMode)
+        if (!_verbose)
         {
             return;
         }

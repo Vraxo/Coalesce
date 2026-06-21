@@ -20,7 +20,7 @@ public class SourceFileProvider
         }
         catch (Exception ex) when (ex is UnauthorizedAccessException or DirectoryNotFoundException)
         {
-            Logger.WriteWarning(
+            Log.Warning(
                 $"Could not access directory '{sourceDirectory}'." +
                 $"Skipping. " +
                 $"Error: {ex.Message}");

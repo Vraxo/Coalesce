@@ -44,7 +44,7 @@ public class FileFilter
             return false;
         }
 
-        Logger.WriteVerbose($"Skipping '{filePath}' because it is the output file.");
+        Log.Verbose($"Skipping '{filePath}' because it is the output file.");
         return true;
     }
 
@@ -54,7 +54,7 @@ public class FileFilter
 
         if (_options.ExcludeFileNames.Contains(fileName, StringComparer.OrdinalIgnoreCase))
         {
-            Logger.WriteVerbose($"Skipping '{fileName}' due to 'excludeFileNames' rule.");
+            Log.Verbose($"Skipping '{fileName}' due to 'excludeFileNames' rule.");
             return true;
         }
 
@@ -80,7 +80,7 @@ public class FileFilter
                 continue;
             }
 
-            Logger.WriteVerbose($"Skipping '{filePath}' because it's in an excluded directory ('{segment}').");
+            Log.Verbose($"Skipping '{filePath}' because it's in an excluded directory ('{segment}').");
             return true;
         }
         return false;
@@ -97,7 +97,7 @@ public class FileFilter
 
         if (_options.ExcludeExtensions.Contains(fileExtension, StringComparer.OrdinalIgnoreCase))
         {
-            Logger.WriteVerbose($"Skipping '{Path.GetFileName(filePath)}' due to 'excludeExtensions' rule for '{fileExtension}'.");
+            Log.Verbose($"Skipping '{Path.GetFileName(filePath)}' due to 'excludeExtensions' rule for '{fileExtension}'.");
             return true;
         }
 
@@ -117,7 +117,7 @@ public class FileFilter
 
         if (!isIncluded && !isPathOnly)
         {
-            Logger.WriteVerbose($"Skipping '{Path.GetFileName(filePath)}' because its extension ('{fileExtension}') is not in 'includeExtensions' or 'pathOnlyExtensions'.");
+            Log.Verbose($"Skipping '{Path.GetFileName(filePath)}' because its extension ('{fileExtension}') is not in 'includeExtensions' or 'pathOnlyExtensions'.");
             return true;
         }
 

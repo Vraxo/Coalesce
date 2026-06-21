@@ -14,7 +14,7 @@ public static class PresetManager
     {
         EnsurePresetsDirectoryExists();
 
-        Logger.WriteInfo("Available presets:");
+        Log.Info("Available presets:");
 
         HashSet<string> customPresets = new(StringComparer.OrdinalIgnoreCase);
         string? presetsPath = GetPresetsDirectoryPath();
@@ -35,7 +35,7 @@ public static class PresetManager
             }
             catch (Exception ex)
             {
-                Logger.WriteWarning($"Could not read custom presets from '{presetsPath}': {ex.Message}");
+                Log.Warning($"Could not read custom presets from '{presetsPath}': {ex.Message}");
             }
         }
 
@@ -64,7 +64,7 @@ public static class PresetManager
                 }
             }
 
-            Logger.WriteInfo($"- {name}{status}");
+            Log.Info($"- {name}{status}");
         }
     }
 
@@ -75,10 +75,11 @@ public static class PresetManager
         string? presetsPath = GetPresetsDirectoryPath();
         if (presetsPath is null)
         {
-            Logger.WriteError("Could not determine the presets directory path.");
+            Log.Error("Could not determine the presets directory path.");
             return;
         }
-        Logger.WriteInfo(presetsPath);
+
+        Log.Info(presetsPath);
     }
 
     public static void EnsurePresetsDirectoryExists()
@@ -86,7 +87,7 @@ public static class PresetManager
         string? presetsPath = GetPresetsDirectoryPath();
         if (presetsPath is null)
         {
-            Logger.WriteWarning(
+            Log.Warning(
                 "Could not determine application directory. " +
                 "Custom presets will be unavailable.");
             return;
@@ -97,7 +98,7 @@ public static class PresetManager
             if (!Directory.Exists(presetsPath))
             {
                 Directory.CreateDirectory(presetsPath);
-                Logger.WriteVerbose($"Created presets directory: {presetsPath}");
+                Log.Verbose($"Created presets directory: {presetsPath}");
             }
 
             string readmePath = Path.Combine(presetsPath, PresetsReadmeFileName);
@@ -116,7 +117,7 @@ public static class PresetManager
         }
         catch (Exception ex)
         {
-            Logger.WriteWarning($"Could not create or write to the presets directory '{presetsPath}': {ex.Message}");
+            Log.Warning($"Could not create or write to the presets directory '{presetsPath}': {ex.Message}");
         }
     }
 
@@ -130,12 +131,12 @@ public static class PresetManager
             {
                 try
                 {
-                    Logger.WriteVerbose($"Loading user-defined preset from: {userPresetPath}");
+                    Log.Verbose($"Loading user-defined preset from: {userPresetPath}");
                     return File.ReadAllText(userPresetPath);
                 }
                 catch (Exception ex)
                 {
-                    Logger.WriteWarning($"Could not read user preset file '{userPresetPath}': {ex.Message}");
+                    Log.Warning($"Could not read user preset file '{userPresetPath}': {ex.Message}");
                 }
             }
         }
@@ -147,12 +148,12 @@ public static class PresetManager
 
         try
         {
-            Logger.WriteVerbose($"Loading built-in preset: {presetName}");
+            Log.Verbose($"Loading built-in preset: {presetName}");
             return ResourceLoader.Get($"Presets.{presetName.ToLower()}.toml");
         }
         catch (Exception ex)
         {
-            Logger.WriteError($"Could not load built-in preset '{presetName}': {ex.Message}");
+            Log.Error($"Could not load built-in preset '{presetName}': {ex.Message}");
             return null;
         }
     }
