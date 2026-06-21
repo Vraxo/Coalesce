@@ -1,4 +1,4 @@
-﻿# presets for Coalesce
+﻿# Presets for Coalesce
 
 This directory is for your custom `coalesce init` presets.
 

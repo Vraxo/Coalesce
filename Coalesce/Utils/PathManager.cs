@@ -45,7 +45,7 @@ public static class PathManager
     {
         string? appDirectory = GetExecutableDirectory();
 
-        if (appDirectory == null)
+        if (appDirectory is null)
         {
             return;
         }
@@ -81,7 +81,7 @@ public static class PathManager
     {
         string? appDirectory = GetExecutableDirectory();
 
-        if (appDirectory == null)
+        if (appDirectory is null)
         {
             return;
         }

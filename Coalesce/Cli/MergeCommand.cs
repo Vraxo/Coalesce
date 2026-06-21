@@ -11,8 +11,6 @@ public class MergeCommand : Command<MergeSettings>
     {
         Logger.Initialize(settings.Quiet, settings.Verbose);
 
-        ConfigurationProvider configProvider = new();
-
         FileInfo? configFile = !string.IsNullOrEmpty(settings.Config) ? new FileInfo(settings.Config) : null;
 
         AppOptions? options = ConfigurationProvider.Build(

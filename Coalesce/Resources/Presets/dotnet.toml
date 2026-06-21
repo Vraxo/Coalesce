@@ -2,16 +2,16 @@
 # Excludes common directories like 'bin', 'obj', and '.vs'.
 
 # Path for the final merged output file.
-outputFilePath = "coalesce.md"
+OutputFilePath = "coalesce.md"
 
 # List of source directories to scan for files.
-sourceDirectoryPaths = [
+SourceDirectoryPaths = [
   "./MyProject/src"
 ]
 
 # (Whitelist) To process ONLY specific file types, add their extensions here (e.g., ".cs", ".py").
 # If this list is empty, Coalesce processes ALL files not matched by other exclusion rules.
-includeExtensions = [
+IncludeExtensions = [
   ".cs",
   ".csproj",
   ".sln",
@@ -22,10 +22,10 @@ includeExtensions = [
 ]
 
 # (Blacklist) Explicitly skip files with these extensions.
-excludeExtensions = []
+ExcludeExtensions = []
 
 # Skip directories with these names (case-insensitive).
-excludeDirectoryNames = [
+ExcludeDirectoryNames = [
   "bin",
   "obj",
   ".vs",
@@ -35,7 +35,7 @@ excludeDirectoryNames = [
 ]
 
 # Skip files with these names (case-insensitive).
-excludeFileNames = [
+ExcludeFileNames = [
   ".DS_Store",
   "Thumbs.db",
   "coalesce.toml"
@@ -43,7 +43,7 @@ excludeFileNames = [
 
 # For these file types, only include their path in the output, not their content.
 # Useful for binary files like images, DLLs, etc.
-pathOnlyExtensions = [
+PathOnlyExtensions = [
   ".png",
   ".jpg",
   ".jpeg",

@@ -15,23 +15,23 @@ public class ConfigurationProviderTests : IDisposable
         // Valid TOML config
         _tempConfigFile = Path.GetTempFileName();
         string tomlContent = """
-            outputFilePath = "from-config.txt"
-            sourceDirectoryPaths = [
+            OutputFilePath = "from-config.txt"
+            SourceDirectoryPaths = [
               "./config-src-1",
               "./config-src-2"
             ]
-            excludeDirectoryNames = [
+            ExcludeDirectoryNames = [
               ".git",
               "node_modules"
             ]
-            includeExtensions = [
+            IncludeExtensions = [
               ".toml",
               ".json"
             ]
-            excludeExtensions = [
+            ExcludeExtensions = [
               ".tmp"
             ]
-            pathOnlyExtensions = [
+            PathOnlyExtensions = [
               ".svg"
             ]
             """;
@@ -39,7 +39,7 @@ public class ConfigurationProviderTests : IDisposable
 
         // Malformed TOML config (unclosed brackets/quotes)
         _malformedConfigFile = Path.GetTempFileName();
-        File.WriteAllText(_malformedConfigFile, "outputFilePath = \"from-config.txt\nsourceDirectoryPaths = [");
+        File.WriteAllText(_malformedConfigFile, "OutputFilePath = \"from-config.txt\nSourceDirectoryPaths = [");
 
         // Empty file
         _emptyConfigFile = Path.GetTempFileName();
@@ -57,7 +57,6 @@ public class ConfigurationProviderTests : IDisposable
     [Fact]
     public void Build_WhenNoConfigFile_UsesCliArgumentsAndDefaults()
     {
-        ConfigurationProvider provider = new();
         string cliOutputPath = "cli-output.txt";
         List<string> cliSourcePaths = ["./cli-src"];
         List<string> cliExcludeDirs = ["bin"];
@@ -73,7 +72,6 @@ public class ConfigurationProviderTests : IDisposable
     [Fact]
     public void Build_WhenNoCliOverrides_LoadsOptionsFromConfigFile()
     {
-        ConfigurationProvider provider = new();
         FileInfo configFile = new(_tempConfigFile);
 
         AppOptions? options = ConfigurationProvider.Build(null, [], [], [], [], [], [], configFile);
@@ -90,7 +88,6 @@ public class ConfigurationProviderTests : IDisposable
     [Fact]
     public void Build_WhenCliPathArgsExist_TheyReplaceConfigFileValues()
     {
-        ConfigurationProvider provider = new();
         FileInfo configFile = new(_tempConfigFile);
         string cliOutputPath = "cli-output.txt";
         List<string> cliSourcePaths = ["./cli-src"];
@@ -105,7 +102,6 @@ public class ConfigurationProviderTests : IDisposable
     [Fact]
     public void Build_WhenCliExcludeArgsExist_TheyAreAddedToConfigFileValues()
     {
-        ConfigurationProvider provider = new();
         FileInfo configFile = new(_tempConfigFile);
         List<string> cliExcludeDirs = ["bin", "obj"];
 
@@ -118,7 +114,6 @@ public class ConfigurationProviderTests : IDisposable
     [Fact]
     public void Build_WhenCliExtensionArgsExist_TheyAreAppliedCorrectly()
     {
-        ConfigurationProvider provider = new();
         FileInfo configFile = new(_tempConfigFile);
         List<string> cliIncludeExt = [".md"];
         List<string> cliExcludeExt = [".log"];
@@ -146,7 +141,6 @@ public class ConfigurationProviderTests : IDisposable
     [Fact]
     public void Build_WhenValidationFails_ReturnsNull()
     {
-        ConfigurationProvider provider = new();
         string cliOutputPath = "cli-output.txt";
         List<string> emptySourcePaths = [];
         FileInfo emptyConfigFileInfo = new(_emptyConfigFile);
@@ -167,7 +161,6 @@ public class ConfigurationProviderTests : IDisposable
     [Fact]
     public void Build_WithMalformedTomlFile_ReturnsNull()
     {
-        ConfigurationProvider provider = new();
         FileInfo configFile = new(_malformedConfigFile);
 
         AppOptions? options = ConfigurationProvider.Build(
@@ -186,7 +179,6 @@ public class ConfigurationProviderTests : IDisposable
     [Fact]
     public void Build_WithEmptyTomlFile_DoesNotThrowAndBuildsFromCli()
     {
-        ConfigurationProvider provider = new();
         FileInfo configFile = new(_emptyConfigFile);
 
         AppOptions? options = ConfigurationProvider.Build(
@@ -207,7 +199,6 @@ public class ConfigurationProviderTests : IDisposable
     [Fact]
     public void Build_WhenSpecifiedConfigFileNotFound_FallsBackToDefaults()
     {
-        ConfigurationProvider provider = new();
         FileInfo nonExistentFile = new("non_existent_config.toml");
 
         AppOptions? options = ConfigurationProvider.Build("output.txt", ["./src"], [], [], [], [], [], nonExistentFile);

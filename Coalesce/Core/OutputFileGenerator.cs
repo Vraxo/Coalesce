@@ -59,7 +59,7 @@ public class OutputFileGenerator(TextWriter writer)
                 writer.WriteLine($"```{language}");
                 using StreamReader reader = new(filePath);
                 string? line;
-                while ((line = reader.ReadLine()) != null)
+                while ((line = reader.ReadLine()) is not null)
                 {
                     writer.WriteLine(line);
                 }

@@ -1,5 +1,4 @@
 ﻿using Coalesce.Utils;
-using System.Reflection;
 
 namespace Coalesce.Cli;
 
@@ -8,6 +7,7 @@ public static class PresetManager
     private const string PresetsDirectoryName = "presets";
     private const string PresetsReadmeFileName = "_readme.md";
     private const string PresetsTemplateFileName = "_template.toml";
+
     private static readonly string[] BuiltInPresets = ["dotnet", "node"];
 
     public static void List()
@@ -18,17 +18,19 @@ public static class PresetManager
 
         HashSet<string> customPresets = new(StringComparer.OrdinalIgnoreCase);
         string? presetsPath = GetPresetsDirectoryPath();
-        if (presetsPath != null && Directory.Exists(presetsPath))
+
+        if (presetsPath is not null && Directory.Exists(presetsPath))
         {
             try
             {
                 foreach (string file in Directory.EnumerateFiles(presetsPath, "*.toml"))
                 {
                     string presetName = Path.GetFileNameWithoutExtension(file);
-                    if (!presetName.StartsWith('_'))
+                    if (presetName.StartsWith('_'))
                     {
-                        _ = customPresets.Add(presetName);
+                        continue;
                     }
+                    customPresets.Add(presetName);
                 }
             }
             catch (Exception ex)
@@ -45,18 +47,24 @@ public static class PresetManager
             bool isCustom = customPresets.Contains(name);
             bool isBuiltIn = BuiltInPresets.Contains(name, StringComparer.OrdinalIgnoreCase);
 
+            string status;
             if (isCustom && isBuiltIn)
             {
-                Logger.WriteInfo($"- {name} (custom, overrides built-in)");
-            }
-            else if (isCustom)
-            {
-                Logger.WriteInfo($"- {name} (custom)");
+                status = " (custom, overrides built-in)";
             }
             else
             {
-                Logger.WriteInfo($"- {name} (built-in)");
+                if (isCustom)
+                {
+                    status = " (custom)";
+                }
+                else
+                {
+                    status = " (built-in)";
+                }
             }
+
+            Logger.WriteInfo($"- {name}{status}");
         }
     }
 
@@ -65,22 +73,22 @@ public static class PresetManager
         EnsurePresetsDirectoryExists();
 
         string? presetsPath = GetPresetsDirectoryPath();
-        if (presetsPath != null)
-        {
-            Logger.WriteInfo(presetsPath);
-        }
-        else
+        if (presetsPath is null)
         {
             Logger.WriteError("Could not determine the presets directory path.");
+            return;
         }
+        Logger.WriteInfo(presetsPath);
     }
 
     public static void EnsurePresetsDirectoryExists()
     {
         string? presetsPath = GetPresetsDirectoryPath();
-        if (presetsPath == null)
+        if (presetsPath is null)
         {
-            Logger.WriteWarning("Could not determine application directory. Custom presets will be unavailable.");
+            Logger.WriteWarning(
+                "Could not determine application directory. " +
+                "Custom presets will be unavailable.");
             return;
         }
 
@@ -88,21 +96,21 @@ public static class PresetManager
         {
             if (!Directory.Exists(presetsPath))
             {
-                _ = Directory.CreateDirectory(presetsPath);
+                Directory.CreateDirectory(presetsPath);
                 Logger.WriteVerbose($"Created presets directory: {presetsPath}");
             }
 
             string readmePath = Path.Combine(presetsPath, PresetsReadmeFileName);
             if (!File.Exists(readmePath))
             {
-                string readmeContent = GetEmbeddedResource("Coalesce.Resources.Presets._readme.md");
+                string readmeContent = ResourceLoader.Get("Presets._readme.md");
                 File.WriteAllText(readmePath, readmeContent);
             }
 
             string templatePath = Path.Combine(presetsPath, PresetsTemplateFileName);
             if (!File.Exists(templatePath))
             {
-                string templateContent = GetEmbeddedResource("Coalesce.Resources.DefaultConfig.toml");
+                string templateContent = ResourceLoader.Get("coalesce.toml");
                 File.WriteAllText(templatePath, templateContent);
             }
         }
@@ -115,7 +123,7 @@ public static class PresetManager
     public static string? GetPresetContent(string presetName)
     {
         string? presetsPath = GetPresetsDirectoryPath();
-        if (presetsPath != null)
+        if (presetsPath is not null)
         {
             string userPresetPath = Path.Combine(presetsPath, $"{presetName}.toml");
             if (File.Exists(userPresetPath))
@@ -132,49 +140,32 @@ public static class PresetManager
             }
         }
 
-        if (BuiltInPresets.Contains(presetName, StringComparer.OrdinalIgnoreCase))
+        if (!BuiltInPresets.Contains(presetName, StringComparer.OrdinalIgnoreCase))
         {
-            try
-            {
-                Logger.WriteVerbose($"Loading built-in preset: {presetName}");
-                return GetEmbeddedResource($"Coalesce.Resources.Presets.{presetName}.toml");
-            }
-            catch (Exception ex)
-            {
-                Logger.WriteError($"Could not load built-in preset '{presetName}': {ex.Message}");
-                return null;
-            }
+            return null;
         }
 
-        return null;
+        try
+        {
+            Logger.WriteVerbose($"Loading built-in preset: {presetName}");
+            return ResourceLoader.Get($"Presets.{presetName.ToLower()}.toml");
+        }
+        catch (Exception ex)
+        {
+            Logger.WriteError($"Could not load built-in preset '{presetName}': {ex.Message}");
+            return null;
+        }
     }
 
     private static string? GetPresetsDirectoryPath()
     {
-        string? appDirectory = GetAppDirectory();
-        return appDirectory != null ? Path.Combine(appDirectory, PresetsDirectoryName) : null;
-    }
-
-    private static string? GetAppDirectory()
-    {
         string? exePath = Environment.ProcessPath;
-        return string.IsNullOrEmpty(exePath) ? null : Path.GetDirectoryName(exePath);
-    }
 
-    private static string GetEmbeddedResource(string resourceName)
-    {
-        Assembly assembly = Assembly.GetExecutingAssembly();
-        using Stream? stream = assembly.GetManifestResourceStream(resourceName);
-
-        if (stream == null)
+        if (string.IsNullOrEmpty(exePath))
         {
-            throw new FileNotFoundException(
-                $"Could not find embedded resource '{resourceName}'. " +
-                $"Make sure the file's 'Build Action' is 'Embedded Resource' and the name is correct.",
-                resourceName);
+            return null;
         }
 
-        using StreamReader reader = new(stream);
-        return reader.ReadToEnd();
+        return Path.Combine(Path.GetDirectoryName(exePath)!, PresetsDirectoryName);
     }
 }

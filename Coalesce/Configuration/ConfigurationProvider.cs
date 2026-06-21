@@ -1,15 +1,20 @@
 ﻿using Coalesce.Utils;
-using System.Reflection;
 using Tomlyn;
+using Tomlyn.Serialization;
 
 namespace Coalesce.Configuration;
+
+[TomlSerializable(typeof(AppOptions))]
+internal partial class CoalesceTomlContext : TomlSerializerContext
+{
+}
 
 public class ConfigurationProvider
 {
     public static AppOptions? Build(string? outputArg, List<string> sourceArgs, List<string> excludeDirOptions, List<string> excludeFileOptions, List<string> includeExtOptions, List<string> excludeExtOptions, List<string> pathOnlyExtOptions, FileInfo? configFileOption)
     {
         AppOptions? options = LoadOptions(configFileOption);
-        if (options == null)
+        if (options is null)
         {
             return null;
         }
@@ -28,26 +33,26 @@ public class ConfigurationProvider
     {
         if (!string.IsNullOrEmpty(outputArg))
         {
-            Logger.WriteVerbose($"Overriding 'outputFilePath' with CLI argument: '{outputArg}'");
+            Logger.WriteVerbose($"Overriding 'OutputFilePath' with CLI argument: '{outputArg}'");
             options.OutputFilePath = outputArg!;
         }
 
         if (sourceArgs.Count > 0)
         {
-            Logger.WriteVerbose("Overriding 'sourceDirectoryPaths' with CLI arguments.");
+            Logger.WriteVerbose("Overriding 'SourceDirectoryPaths' with CLI arguments.");
             options.SourceDirectoryPaths = sourceArgs;
         }
 
         if (includeExtOptions.Count > 0)
         {
-            Logger.WriteVerbose("Replacing 'includeExtensions' with CLI arguments.");
+            Logger.WriteVerbose("Replacing 'IncludeExtensions' with CLI arguments.");
             options.IncludeExtensions = includeExtOptions;
         }
 
-        AddCliOptionsToList(options.ExcludeDirectoryNames, excludeDirOptions, "excludeDirectoryNames");
-        AddCliOptionsToList(options.ExcludeFileNames, excludeFileOptions, "excludeFileNames");
-        AddCliOptionsToList(options.ExcludeExtensions, excludeExtOptions, "excludeExtensions");
-        AddCliOptionsToList(options.PathOnlyExtensions, pathOnlyExtOptions, "pathOnlyExtensions");
+        AddCliOptionsToList(options.ExcludeDirectoryNames, excludeDirOptions, "ExcludeDirectoryNames");
+        AddCliOptionsToList(options.ExcludeFileNames, excludeFileOptions, "ExcludeFileNames");
+        AddCliOptionsToList(options.ExcludeExtensions, excludeExtOptions, "ExcludeExtensions");
+        AddCliOptionsToList(options.PathOnlyExtensions, pathOnlyExtOptions, "PathOnlyExtensions");
     }
 
     private static void AddCliOptionsToList(List<string> targetList, List<string> cliOptions, string optionName)
@@ -97,7 +102,7 @@ public class ConfigurationProvider
     {
         string? resolvedConfigPath = null;
 
-        if (configFileOption != null)
+        if (configFileOption is not null)
         {
             if (!configFileOption.Exists)
             {
@@ -117,7 +122,7 @@ public class ConfigurationProvider
             }
         }
 
-        if (resolvedConfigPath != null)
+        if (resolvedConfigPath is not null)
         {
             Logger.WriteInfo($"Loading configuration from: {resolvedConfigPath}");
             return LoadOptionsFromTomlFile(resolvedConfigPath);
@@ -145,7 +150,7 @@ public class ConfigurationProvider
     {
         try
         {
-            string tomlContent = GetEmbeddedResource("Coalesce.Resources.DefaultConfig.toml");
+            string tomlContent = ResourceLoader.Get("coalesce.toml");
             return DeserializeToml(tomlContent);
         }
         catch (Exception ex)
@@ -153,17 +158,6 @@ public class ConfigurationProvider
             Logger.WriteError($"FATAL: Could not load the built-in default configuration. {ex.Message}");
             return null;
         }
-    }
-
-    private static string GetEmbeddedResource(string resourceName)
-    {
-        Assembly assembly = Assembly.GetExecutingAssembly();
-
-        using Stream? stream = assembly.GetManifestResourceStream(resourceName)
-            ?? throw new FileNotFoundException($"Could not find embedded resource '{resourceName}'.", resourceName);
-
-        using StreamReader reader = new(stream);
-        return reader.ReadToEnd();
     }
 
     private static AppOptions? DeserializeToml(string tomlContent)

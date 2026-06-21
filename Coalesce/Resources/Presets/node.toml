@@ -2,16 +2,16 @@
 # Excludes 'node_modules', build output directories, and common lock files.
 
 # Path for the final merged output file.
-outputFilePath = "coalesce.md"
+OutputFilePath = "coalesce.md"
 
 # List of source directories to scan for files.
-sourceDirectoryPaths = [
+SourceDirectoryPaths = [
   "./src"
 ]
 
 # (Whitelist) To process ONLY specific file types, add their extensions here (e.g., ".js", ".ts").
 # If this list is empty, Coalesce processes ALL files not matched by other exclusion rules.
-includeExtensions = [
+IncludeExtensions = [
   ".js",
   ".jsx",
   ".ts",
@@ -25,10 +25,10 @@ includeExtensions = [
 ]
 
 # (Blacklist) Explicitly skip files with these extensions.
-excludeExtensions = []
+ExcludeExtensions = []
 
 # Skip directories with these names (case-insensitive).
-excludeDirectoryNames = [
+ExcludeDirectoryNames = [
   "node_modules",
   "dist",
   "build",
@@ -37,7 +37,7 @@ excludeDirectoryNames = [
 ]
 
 # Skip files with these names (case-insensitive).
-excludeFileNames = [
+ExcludeFileNames = [
   ".DS_Store",
   "Thumbs.db",
   "package-lock.json",
@@ -48,7 +48,7 @@ excludeFileNames = [
 
 # For these file types, only include their path in the output, not their content.
 # Useful for binary files like images, etc.
-pathOnlyExtensions = [
+PathOnlyExtensions = [
   ".png",
   ".jpg",
   ".jpeg",
