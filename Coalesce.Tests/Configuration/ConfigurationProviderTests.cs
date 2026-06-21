@@ -1,4 +1,5 @@
 ﻿using AwesomeAssertions;
+using Coalesce.Cli;
 using Coalesce.Configuration;
 using Xunit;
 
@@ -55,26 +56,31 @@ public class ConfigurationProviderTests : IDisposable
     }
 
     [Fact]
-    public void Build_WhenNoConfigFile_UsesCliArgumentsAndDefaults()
+    public void Build_WhenNoConfigFile_UsesCliArgumentsDirectlyAndRawly()
     {
-        string cliOutputPath = "cli-output.txt";
-        List<string> cliSourcePaths = ["./cli-src"];
-        List<string> cliExcludeDirs = ["bin"];
+        MergeSettings settings = new()
+        {
+            OutputFile = "cli-output.txt",
+            SourceDirs = ["./cli-src"],
+            ExcludeDir = ["bin"]
+        };
 
-        AppOptions? options = ConfigurationProvider.Build(cliOutputPath, cliSourcePaths, cliExcludeDirs, [], [], [], [], null);
+        AppOptions? options = ConfigurationProvider.Build(settings, null);
 
         options.Should().NotBeNull();
-        options!.OutputFilePath.Should().Be(cliOutputPath);
-        options.SourceDirectoryPaths.Should().BeEquivalentTo(cliSourcePaths);
-        options.ExcludeDirectoryNames.Should().Contain("bin");
+        options!.OutputFilePath.Should().Be("cli-output.txt");
+        options.SourceDirectoryPaths.Should().BeEquivalentTo("./cli-src");
+        options.ExcludeDirectoryNames.Should().BeEquivalentTo("bin");
+        options.ExcludeFileNames.Should().BeEmpty();
     }
 
     [Fact]
-    public void Build_WhenNoCliOverrides_LoadsOptionsFromConfigFile()
+    public void Build_InConfigMode_LoadsOptionsFromConfigFileExactly()
     {
         FileInfo configFile = new(_tempConfigFile);
+        MergeSettings settings = new(); // No positional arguments supplied
 
-        AppOptions? options = ConfigurationProvider.Build(null, [], [], [], [], [], [], configFile);
+        AppOptions? options = ConfigurationProvider.Build(settings, configFile);
 
         options.Should().NotBeNull();
         options!.OutputFilePath.Should().Be("from-config.txt");
@@ -86,77 +92,32 @@ public class ConfigurationProviderTests : IDisposable
     }
 
     [Fact]
-    public void Build_WhenCliPathArgsExist_TheyReplaceConfigFileValues()
+    public void Build_InConfigMode_IgnoresCliArguments()
     {
         FileInfo configFile = new(_tempConfigFile);
-        string cliOutputPath = "cli-output.txt";
-        List<string> cliSourcePaths = ["./cli-src"];
+        MergeSettings settings = new()
+        {
+            OutputFile = "ignored-output.txt",
+            SourceDirs = ["./ignored-src"]
+        };
 
-        AppOptions? options = ConfigurationProvider.Build(cliOutputPath, cliSourcePaths, [], [], [], [], [], configFile);
-
-        options.Should().NotBeNull();
-        options!.OutputFilePath.Should().Be(cliOutputPath);
-        options.SourceDirectoryPaths.Should().BeEquivalentTo(cliSourcePaths);
-    }
-
-    [Fact]
-    public void Build_WhenCliExcludeArgsExist_TheyReplaceConfigFileValues()
-    {
-        FileInfo configFile = new(_tempConfigFile);
-        List<string> cliExcludeDirs = ["bin", "obj"];
-
-        AppOptions? options = ConfigurationProvider.Build(null, [], cliExcludeDirs, [], [], [], [], configFile);
+        AppOptions? options = ConfigurationProvider.Build(settings, configFile);
 
         options.Should().NotBeNull();
-        options!.ExcludeDirectoryNames.Should().BeEquivalentTo("bin", "obj");
-    }
-
-    [Fact]
-    public void Build_WhenCliExtensionArgsExist_TheyReplaceConfigFileValues()
-    {
-        FileInfo configFile = new(_tempConfigFile);
-        List<string> cliIncludeExt = [".md"];
-        List<string> cliExcludeExt = [".log"];
-        List<string> cliPathOnlyExt = [".bin"];
-
-        AppOptions? options = ConfigurationProvider.Build(
-            null,
-            [],
-            [],
-            [],
-            cliIncludeExt,
-            cliExcludeExt,
-            cliPathOnlyExt,
-            configFile);
-
-        options.Should().NotBeNull();
-
-        options!.IncludeExtensions.Should().BeEquivalentTo(cliIncludeExt);
-        options.IncludeExtensions.Should().NotContain(".toml");
-
-        options.ExcludeExtensions.Should().BeEquivalentTo(".log");
-        options.ExcludeExtensions.Should().NotContain(".tmp");
-
-        options.PathOnlyExtensions.Should().BeEquivalentTo(".bin");
-        options.PathOnlyExtensions.Should().NotContain(".svg");
+        options!.OutputFilePath.Should().Be("from-config.txt");
+        options.SourceDirectoryPaths.Should().HaveCount(2).And.ContainInOrder("./config-src-1", "./config-src-2");
     }
 
     [Fact]
     public void Build_WhenValidationFails_ReturnsNull()
     {
-        string cliOutputPath = "cli-output.txt";
-        List<string> emptySourcePaths = [];
-        FileInfo emptyConfigFileInfo = new(_emptyConfigFile);
+        MergeSettings settings = new()
+        {
+            OutputFile = "cli-output.txt",
+            SourceDirs = [] // Invalid empty sources
+        };
 
-        AppOptions? options = ConfigurationProvider.Build(
-            cliOutputPath,
-            emptySourcePaths,
-            [],
-            [],
-            [],
-            [],
-            [],
-            emptyConfigFileInfo);
+        AppOptions? options = ConfigurationProvider.Build(settings, null);
 
         options.Should().BeNull();
     }
@@ -165,48 +126,32 @@ public class ConfigurationProviderTests : IDisposable
     public void Build_WithMalformedTomlFile_ReturnsNull()
     {
         FileInfo configFile = new(_malformedConfigFile);
+        MergeSettings settings = new();
 
-        AppOptions? options = ConfigurationProvider.Build(
-            "output.txt",
-            ["./src"],
-            [],
-            [],
-            [],
-            [],
-            [],
-            configFile);
+        AppOptions? options = ConfigurationProvider.Build(settings, configFile);
 
         options.Should().BeNull();
     }
 
     [Fact]
-    public void Build_WithEmptyTomlFile_DoesNotThrowAndBuildsFromCli()
+    public void Build_WithEmptyConfigFile_LoadsEmptyConfigAndFailsValidation()
     {
         FileInfo configFile = new(_emptyConfigFile);
+        MergeSettings settings = new();
 
-        AppOptions? options = ConfigurationProvider.Build(
-            "output.txt",
-            ["./src"],
-            [],
-            [],
-            [],
-            [],
-            [],
-            configFile);
+        AppOptions? options = ConfigurationProvider.Build(settings, configFile);
 
-        options.Should().NotBeNull();
-        options!.OutputFilePath.Should().Be("output.txt");
-        options.ExcludeDirectoryNames.Should().BeEmpty();
+        options.Should().BeNull(); // Fails validation as empty config has no outputs or sources
     }
 
     [Fact]
-    public void Build_WhenSpecifiedConfigFileNotFound_FallsBackToDefaults()
+    public void Build_WhenSpecifiedConfigFileNotFound_ReturnsNullAndFailsFast()
     {
         FileInfo nonExistentFile = new("non_existent_config.toml");
+        MergeSettings settings = new();
 
-        AppOptions? options = ConfigurationProvider.Build("output.txt", ["./src"], [], [], [], [], [], nonExistentFile);
+        AppOptions? options = ConfigurationProvider.Build(settings, nonExistentFile);
 
-        options.Should().NotBeNull();
-        options!.ExcludeDirectoryNames.Should().NotBeEmpty();
+        options.Should().BeNull();
     }
 }

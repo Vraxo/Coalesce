@@ -1,78 +1,91 @@
-﻿using Coalesce.Utils;
+﻿using Coalesce.Cli;
+using Coalesce.Utils;
 using Tomlyn;
 
 namespace Coalesce.Configuration;
 
 public static class ConfigurationProvider
 {
-    public static AppOptions? Build(string? outputArg, List<string> sourceArgs, List<string> excludeDirOptions, List<string> excludeFileOptions, List<string> includeExtOptions, List<string> excludeExtOptions, List<string> pathOnlyExtOptions, FileInfo? configFileOption)
+    public static AppOptions? Build(MergeSettings settings, FileInfo? configFileOption)
     {
-        AppOptions? options = LoadOptions(configFileOption);
-        if (options is null)
+        if (configFileOption is not null)
         {
-            return null;
+            return BuildFromConfigFile(configFileOption);
         }
 
-        ApplyCommandLineOverrides(
-            options,
-            outputArg,
-            sourceArgs,
-            excludeDirOptions,
-            excludeFileOptions,
-            includeExtOptions,
-            excludeExtOptions,
-            pathOnlyExtOptions);
+        bool hasCliArgs = !string.IsNullOrEmpty(settings.OutputFile) || settings.SourceDirs.Length > 0;
 
-        if (!Validate(options))
+        if (hasCliArgs)
         {
-            return null;
+            return BuildFromCommandLine(settings);
         }
 
-        return options;
+        string defaultConfigPath = Path.Combine(Environment.CurrentDirectory, "coalesce.toml");
+        if (File.Exists(defaultConfigPath))
+        {
+            return BuildFromConfigFile(new(defaultConfigPath));
+        }
+
+        return BuildFromCommandLine(settings);
     }
 
-    private static void ApplyCommandLineOverrides(AppOptions options, string? outputArg, List<string> sourceArgs, List<string> excludeDirOptions, List<string> excludeFileOptions, List<string> includeExtOptions, List<string> excludeExtOptions, List<string> pathOnlyExtOptions)
+    private static AppOptions? BuildFromConfigFile(FileInfo resolvedConfig)
     {
-        if (!string.IsNullOrEmpty(outputArg))
+        if (!resolvedConfig.Exists)
         {
-            Log.Verbose($"Overriding 'OutputFilePath' with CLI argument: '{outputArg}'");
-            options.OutputFilePath = outputArg;
+            Log.Warning($"Configuration file not found: {resolvedConfig.FullName}");
+            return null;
         }
 
-        if (sourceArgs.Count > 0)
+        Log.Info($"Loading configuration from: {resolvedConfig.FullName}");
+        AppOptions? options = LoadOptionsFromTomlFile(resolvedConfig.FullName);
+        return options is not null && Validate(options) ? options : null;
+    }
+
+    private static AppOptions? BuildFromCommandLine(MergeSettings settings)
+    {
+        Log.Verbose("No configuration file loaded. Operating in ad-hoc CLI mode.");
+        AppOptions cliOptions = new()
         {
-            Log.Verbose("Overriding 'SourceDirectoryPaths' with CLI arguments.");
-            options.SourceDirectoryPaths = sourceArgs;
+            OutputFilePath = settings.OutputFile ?? string.Empty,
+            SourceDirectoryPaths = [.. settings.SourceDirs],
+            ExcludeDirectoryNames = [.. settings.ExcludeDir],
+            ExcludeFileNames = [.. settings.ExcludeFile],
+            IncludeExtensions = [.. settings.IncludeExt],
+            ExcludeExtensions = [.. settings.ExcludeExt],
+            PathOnlyExtensions = [.. settings.PathOnlyExt]
+        };
+
+        return Validate(cliOptions) ? cliOptions : null;
+    }
+
+    private static AppOptions? LoadOptionsFromTomlFile(string configPath)
+    {
+        try
+        {
+            return DeserializeToml(File.ReadAllText(configPath));
+        }
+        catch (Exception ex)
+        {
+            Log.Error($"Error loading or parsing config file '{configPath}': {ex.Message}");
+            return null;
+        }
+    }
+
+    private static AppOptions? DeserializeToml(string tomlContent)
+    {
+        if (string.IsNullOrWhiteSpace(tomlContent))
+        {
+            return new AppOptions();
         }
 
-        if (includeExtOptions.Count > 0)
+        try
         {
-            Log.Verbose("Overriding 'IncludeExtensions' with CLI arguments.");
-            options.IncludeExtensions = includeExtOptions;
+            return TomlSerializer.Deserialize<AppOptions>(tomlContent, CoalesceTomlContext.Default.AppOptions);
         }
-
-        if (excludeDirOptions.Count > 0)
+        catch (Exception ex)
         {
-            Log.Verbose("Overriding 'ExcludeDirectoryNames' with CLI arguments.");
-            options.ExcludeDirectoryNames = excludeDirOptions;
-        }
-
-        if (excludeFileOptions.Count > 0)
-        {
-            Log.Verbose("Overriding 'ExcludeFileNames' with CLI arguments.");
-            options.ExcludeFileNames = excludeFileOptions;
-        }
-
-        if (excludeExtOptions.Count > 0)
-        {
-            Log.Verbose("Overriding 'ExcludeExtensions' with CLI arguments.");
-            options.ExcludeExtensions = excludeExtOptions;
-        }
-
-        if (pathOnlyExtOptions.Count > 0)
-        {
-            Log.Verbose("Overriding 'PathOnlyExtensions' with CLI arguments.");
-            options.PathOnlyExtensions = pathOnlyExtOptions;
+            throw new FormatException($"The configuration file is malformed. {ex.Message}", ex);
         }
     }
 
@@ -82,19 +95,13 @@ public static class ConfigurationProvider
 
         if (string.IsNullOrEmpty(options.OutputFilePath))
         {
-            Log.Error(
-                "Missing output file path. " +
-                "Please specify it as an argument or in your config file.");
-
+            Log.Error("Missing output file path. Please specify it as an argument or in your config file.");
             hasError = true;
         }
 
         if (options.SourceDirectoryPaths.Count == 0)
         {
-            Log.Error("" +
-                "Missing source directories. " +
-                "Please provide at least one source directory as an argument or in your config file.");
-
+            Log.Error("Missing source directories. Please provide at least one source directory as an argument or in your config file.");
             hasError = true;
         }
 
@@ -106,87 +113,5 @@ public static class ConfigurationProvider
         }
 
         return true;
-    }
-
-    private static AppOptions? LoadOptions(FileInfo? configFileOption)
-    {
-        string? resolvedConfigPath = null;
-
-        if (configFileOption is null)
-        {
-            string defaultConfigPath = Path.Combine(Environment.CurrentDirectory, "coalesce.toml");
-
-            if (File.Exists(defaultConfigPath))
-            {
-                resolvedConfigPath = defaultConfigPath;
-            }
-        }
-        else
-        {
-            if (!configFileOption.Exists)
-            {
-                Log.Warning($"Configuration file specified via --config not found: {configFileOption.FullName}");
-                return LoadDefaultOptionsFromEmbedded();
-            }
-
-            resolvedConfigPath = configFileOption.FullName;
-        }
-
-        if (resolvedConfigPath is not null)
-        {
-            Log.Info($"Loading configuration from: {resolvedConfigPath}");
-            return LoadOptionsFromTomlFile(resolvedConfigPath);
-        }
-
-        Log.Verbose(
-            "No 'coalesce.toml' found. " +
-            "Using built-in default configuration.");
-
-        return LoadDefaultOptionsFromEmbedded();
-    }
-
-    private static AppOptions? LoadOptionsFromTomlFile(string configPath)
-    {
-        try
-        {
-            string tomlContent = File.ReadAllText(configPath);
-            return DeserializeToml(tomlContent);
-        }
-        catch (Exception ex)
-        {
-            Log.Error($"Error loading or parsing config file '{configPath}': {ex.Message}");
-            return null;
-        }
-    }
-
-    private static AppOptions? LoadDefaultOptionsFromEmbedded()
-    {
-        try
-        {
-            string tomlContent = ResourceLoader.Get("coalesce.toml");
-            return DeserializeToml(tomlContent);
-        }
-        catch (Exception ex)
-        {
-            Log.Error($"FATAL: Could not load the built-in default configuration. {ex.Message}");
-            return null;
-        }
-    }
-
-    private static AppOptions? DeserializeToml(string tomlContent)
-    {
-        if (string.IsNullOrWhiteSpace(tomlContent))
-        {
-            return new();
-        }
-
-        try
-        {
-            return TomlSerializer.Deserialize<AppOptions>(tomlContent, CoalesceTomlContext.Default.AppOptions);
-        }
-        catch (Exception ex)
-        {
-            throw new FormatException($"The configuration file is malformed. {ex.Message}", ex);
-        }
     }
 }

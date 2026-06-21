@@ -17,7 +17,7 @@ public sealed class MergeCommand : Command<MergeSettings>
             ? new FileInfo(settings.Config)
             : null;
 
-        AppOptions? options = GetOptions(settings, configFile);
+        AppOptions? options = ConfigurationProvider.Build(settings, configFile);
 
         if (options is null)
         {
@@ -34,18 +34,5 @@ public sealed class MergeCommand : Command<MergeSettings>
             Log.Error($"An unexpected error occurred: {ex.Message}");
             return 1;
         }
-    }
-
-    private static AppOptions? GetOptions(MergeSettings settings, FileInfo? configFile)
-    {
-        return ConfigurationProvider.Build(
-            settings.OutputFile,
-            [.. settings.SourceDirs],
-            [.. settings.ExcludeDir],
-            [.. settings.ExcludeFile],
-            [.. settings.IncludeExt],
-            [.. settings.ExcludeExt],
-            [.. settings.PathOnlyExt],
-            configFile);
     }
 }
