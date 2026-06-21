@@ -36,7 +36,7 @@ public static class ConfigurationProvider
         if (!string.IsNullOrEmpty(outputArg))
         {
             Log.Verbose($"Overriding 'OutputFilePath' with CLI argument: '{outputArg}'");
-            options.OutputFilePath = outputArg!;
+            options.OutputFilePath = outputArg;
         }
 
         if (sourceArgs.Count > 0)
@@ -47,32 +47,32 @@ public static class ConfigurationProvider
 
         if (includeExtOptions.Count > 0)
         {
-            Log.Verbose("Replacing 'IncludeExtensions' with CLI arguments.");
+            Log.Verbose("Overriding 'IncludeExtensions' with CLI arguments.");
             options.IncludeExtensions = includeExtOptions;
         }
 
-        AddCliOptionsToList(options.ExcludeDirectoryNames, excludeDirOptions, "ExcludeDirectoryNames");
-        AddCliOptionsToList(options.ExcludeFileNames, excludeFileOptions, "ExcludeFileNames");
-        AddCliOptionsToList(options.ExcludeExtensions, excludeExtOptions, "ExcludeExtensions");
-        AddCliOptionsToList(options.PathOnlyExtensions, pathOnlyExtOptions, "PathOnlyExtensions");
-    }
-
-    private static void AddCliOptionsToList(List<string> targetList, List<string> cliOptions, string optionName)
-    {
-        if (cliOptions.Count == 0)
+        if (excludeDirOptions.Count > 0)
         {
-            return;
+            Log.Verbose("Overriding 'ExcludeDirectoryNames' with CLI arguments.");
+            options.ExcludeDirectoryNames = excludeDirOptions;
         }
 
-        Log.Verbose($"Adding to '{optionName}' from CLI arguments.");
-        foreach (string option in cliOptions)
+        if (excludeFileOptions.Count > 0)
         {
-            if (targetList.Contains(option, StringComparer.OrdinalIgnoreCase))
-            {
-                continue;
-            }
+            Log.Verbose("Overriding 'ExcludeFileNames' with CLI arguments.");
+            options.ExcludeFileNames = excludeFileOptions;
+        }
 
-            targetList.Add(option);
+        if (excludeExtOptions.Count > 0)
+        {
+            Log.Verbose("Overriding 'ExcludeExtensions' with CLI arguments.");
+            options.ExcludeExtensions = excludeExtOptions;
+        }
+
+        if (pathOnlyExtOptions.Count > 0)
+        {
+            Log.Verbose("Overriding 'PathOnlyExtensions' with CLI arguments.");
+            options.PathOnlyExtensions = pathOnlyExtOptions;
         }
     }
 

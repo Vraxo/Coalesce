@@ -100,7 +100,7 @@ public class ConfigurationProviderTests : IDisposable
     }
 
     [Fact]
-    public void Build_WhenCliExcludeArgsExist_TheyAreAddedToConfigFileValues()
+    public void Build_WhenCliExcludeArgsExist_TheyReplaceConfigFileValues()
     {
         FileInfo configFile = new(_tempConfigFile);
         List<string> cliExcludeDirs = ["bin", "obj"];
@@ -108,11 +108,11 @@ public class ConfigurationProviderTests : IDisposable
         AppOptions? options = ConfigurationProvider.Build(null, [], cliExcludeDirs, [], [], [], [], configFile);
 
         options.Should().NotBeNull();
-        options!.ExcludeDirectoryNames.Should().BeEquivalentTo(".git", "node_modules", "bin", "obj");
+        options!.ExcludeDirectoryNames.Should().BeEquivalentTo("bin", "obj");
     }
 
     [Fact]
-    public void Build_WhenCliExtensionArgsExist_TheyAreAppliedCorrectly()
+    public void Build_WhenCliExtensionArgsExist_TheyReplaceConfigFileValues()
     {
         FileInfo configFile = new(_tempConfigFile);
         List<string> cliIncludeExt = [".md"];
@@ -134,8 +134,11 @@ public class ConfigurationProviderTests : IDisposable
         options!.IncludeExtensions.Should().BeEquivalentTo(cliIncludeExt);
         options.IncludeExtensions.Should().NotContain(".toml");
 
-        options.ExcludeExtensions.Should().BeEquivalentTo(".tmp", ".log");
-        options.PathOnlyExtensions.Should().BeEquivalentTo(".svg", ".bin");
+        options.ExcludeExtensions.Should().BeEquivalentTo(".log");
+        options.ExcludeExtensions.Should().NotContain(".tmp");
+
+        options.PathOnlyExtensions.Should().BeEquivalentTo(".bin");
+        options.PathOnlyExtensions.Should().NotContain(".svg");
     }
 
     [Fact]

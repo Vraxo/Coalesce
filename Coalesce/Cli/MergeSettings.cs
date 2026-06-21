@@ -34,7 +34,7 @@ public sealed class MergeSettings : CommandSettings
     public string[] PathOnlyExt { get; init; } = [];
 
     [CommandOption("--config <CONFIG>")]
-    [Description("Path to a YAML configuration file. If not provided, 'coalesce.yaml' in the current directory is used if it exists.")]
+    [Description("Path to a TOML configuration file. If not provided, 'coalesce.toml' in the current directory is used if it exists.")]
     public string? Config { get; init; }
 
     [CommandOption("--dry-run")]

@@ -6,6 +6,6 @@ namespace Coalesce.Cli;
 public sealed class InitSettings : CommandSettings
 {
     [CommandOption("--preset <PRESET>")]
-    [Description("Initializes 'coalesce.yaml' from a built-in or custom preset template.")]
+    [Description("Initializes 'coalesce.toml' from a built-in preset template (e.g., 'dotnet', 'node').")]
     public string? Preset { get; init; }
 }
