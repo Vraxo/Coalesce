@@ -1,6 +1,6 @@
 # ✨ Coalesce
 
-A simple CLI tool to merge source code from multiple files and directories into a single, context-rich text file.
+A simple CLI tool to merge source code from multiple files and directories into a single, context-rich Markdown file.
 
 ---
 
@@ -14,16 +14,14 @@ This is a solo project, developed almost entirely by AI. It's built primarily fo
 
 ## ✅ Features
 
-- **Directory Merging**: Scans one or more source directories and merges all eligible files.
-- **Configuration File**: Easily configure merge and filtering options using a concise `coalesce.toml` file.
-- **Smart Filtering**:
-  - Include files based on a whitelist of extensions (`include_extensions`).
-  - Exclude directories and files by name (`exclude_dirs`, `exclude_files`).
-  - Exclude files by extension (`exclude_extensions`).
-  - Built-in defaults automatically skip `.git`, `.DS_Store`, `Thumbs.db`, `coalesce.toml` (or the active `--config` file), and the output file itself.
+- **Zero-Config Ready**: Run `coalesce` in any project without a config file—it scans the current directory, skips common build/dependency folders (`bin`, `obj`, `node_modules`, `.git`, `dist`, `artifacts`, etc.) and lockfiles automatically, and writes `coalesce.md`.
+- **Flat `.coalesce` Pattern File**: Optionally customize what gets merged using a simple, line-based `.coalesce` file—no TOML, YAML, or JSON boilerplate.
+- **Exclude & Include Rules**:
+  - Plain lines exclude directories (`docs/`), extensions (`*.log`), or files (`secret.json`).
+  - Lines starting with `!` (or `+`) narrow the merge to specific directories (`!src/`) or extensions (`!*.cs`).
+- **Automatic Output Naming**: Running `coalesce` outputs `coalesce.md`. Running `coalesce --config api.coalesce` automatically outputs `api.md`.
 - **Automatic Binary Handling**: Automatically detects binary files (by extension or null-byte inspection) and includes their path in the output without dumping raw binary content.
-- **Project Presets**: Quickly generate a `coalesce.toml` for common project types like `dotnet` and `node`.
-- **Dry Run Mode**: Preview which files will be included in the output without actually writing the file using the `--dry-run` flag.
+- **Dry Run Mode**: Preview which files will be included in the output without writing the file using `--dry-run`.
 
 ---
 
@@ -47,50 +45,33 @@ coalesce install
 
 ## 🚀 Quick Start
 
-The easiest way to get started is by using the `init` command in your project's root directory.
+1. **Run Immediately (Zero Config)**
 
-1. **Initialize Configuration**
-   
-   This command creates a default `coalesce.toml` file in the current directory.
-   
-   ```sh
-   coalesce init
-   ```
-   
-   If you're working with a Node.js or .NET project, you can use a preset to get a more tailored configuration:
-   
-   ```sh
-   # For a Node.js project
-   coalesce init --preset node
-   
-   # For a .NET project
-   coalesce init --preset dotnet
-   ```
+   In any project directory, simply run:
 
-2. **Customize `coalesce.toml`**
-   
-   Open the newly created `coalesce.toml` and edit `sources` and other options to match your project structure.
-   
-   ```toml
-   # Path for the final merged output file (defaults to "coalesce.md" if omitted).
-   output = "coalesce.md"
-   
-   # List of source directories to scan for files.
-   sources = [
-     "./src",
-     # "./another-source-folder"
-   ]
-   ```
-
-3. **Run the Merge**
-   
-   Simply execute the main command. It will automatically find and use your `coalesce.toml` file.
-   
    ```sh
    coalesce
    ```
-   
-   This will generate the `coalesce.md` file (or whatever you specified in your config) in the current directory.
+
+   This scans the current directory (automatically skipping `.git`, `bin`, `obj`, `node_modules`, `dist`, `artifacts`, lockfiles, etc.) and generates `coalesce.md`.
+
+2. **Customize with `.coalesce` (Optional)**
+
+   To create a starter `.coalesce` file in the current directory:
+
+   ```sh
+   coalesce init
+   ```
+
+   Edit `.coalesce` with plain lines to exclude items, or `!` lines to narrow what gets included:
+
+   ```gitignore
+   # Only scan Coalesce/ and Coalesce.Tests/, and only include .cs and .csproj files
+   !Coalesce/
+   !Coalesce.Tests/
+   !*.cs
+   !*.csproj
+   ```
 
 ---
 
@@ -98,7 +79,7 @@ The easiest way to get started is by using the `init` command in your project's 
 
 ### The `merge` Command
 
-This is the default command. It merges files using `coalesce.toml` in the current directory (or a custom TOML file provided via `--config`).
+This is the default command. It merges files using `.coalesce` in the current directory if present, or built-in defaults if no `.coalesce` file exists.
 
 **Syntax**
 
@@ -108,38 +89,36 @@ coalesce [options]
 
 **Options**
 
-| Option              | Description                                                                                      |
-| ------------------- | ------------------------------------------------------------------------------------------------ |
-| `--config <CONFIG>` | Path to a TOML configuration file. Defaults to `coalesce.toml` in the current directory.         |
-| `--dry-run`         | Simulates a merge, printing which files would be included without writing the output file.       |
-| `--quiet`           | Suppresses all informational output. Only warnings and errors will be displayed.                 |
-| `--verbose`         | Enables detailed output, showing why files are skipped and how configuration is applied.         |
-| `-h`, `--help`      | Show help and usage information.                                                                 |
+| Option              | Description                                                                                        |
+| ------------------- | -------------------------------------------------------------------------------------------------- |
+| `--config <CONFIG>` | Path to a configuration file. Output is named `<config-name>.md` (defaults to `.coalesce` → `coalesce.md`). |
+| `--dry-run`         | Simulates a merge, printing which files would be included without writing the output file.         |
+| `--quiet`           | Suppresses all informational output. Only warnings and errors will be displayed.                   |
+| `--verbose`         | Enables detailed output, showing why files are skipped and how configuration is applied.           |
+| `-h`, `--help`      | Show help and usage information.                                                                   |
 
 **Examples**
 
 ```sh
-# Run using coalesce.toml in the current directory
+# Run using .coalesce in the current directory (or zero-config defaults) -> outputs coalesce.md
 coalesce
 
 # Preview which files would be merged without writing the output file
 coalesce --dry-run
 
-# Run using a specific TOML configuration file
-coalesce --config custom-config.toml
+# Run using a custom profile -> outputs api.md
+coalesce --config api.coalesce
 ```
 
 ### Other Commands
 
 #### `init`
 
-Generates a `coalesce.toml` configuration file in the current directory.
+Generates a starter `.coalesce` configuration file in the current directory.
 
 ```sh
-coalesce init [--preset <PRESET>]
+coalesce init
 ```
-
-- `--preset <PRESET>`: (Optional) Initializes `coalesce.toml` from a built-in preset template (`dotnet`, `node`).
 
 #### `install` / `uninstall`
 
@@ -150,58 +129,37 @@ Manages the application's presence in the system PATH.
 
 ---
 
-## 📝 Configuration (`coalesce.toml`)
+## 📝 Configuration (`.coalesce`)
 
-The `coalesce.toml` file is the primary way to configure the tool for a project. The `init` command generates this file for you.
+`.coalesce` is a plain-text file with one rule per line (`#` starts a comment):
 
-Here is the default configuration:
+- **Plain lines exclude** directories, extensions, or files on top of the built-in defaults:
+  ```gitignore
+  # Exclude extra folders, extensions, or specific files
+  docs/
+  benchmarks/
+  *.md
+  publish.ps1
+  ```
+- **Lines starting with `!` (or `+`) include** specific directories or extensions:
+  - If any `!dir/` lines are present, Coalesce scans only those directories instead of `.`.
+  - If any `!*.ext` lines are present, Coalesce includes only files with those extensions.
+  ```gitignore
+  # Only include C# and project files from src/
+  !src/
+  !*.cs
+  !*.csproj
 
-```toml
-# Default configuration for Coalesce.
-# Use 'coalesce init --preset <name>' for project-specific templates (e.g., dotnet, node).
+  # Still exclude specific files or folders inside src/
+  Generated/
+  AssemblyInfo.cs
+  ```
 
-# Path for the final merged output file (defaults to "coalesce.md" if omitted).
-output = "coalesce.md"
+**Built-in Exclusions**
 
-# List of source directories to scan for files.
-sources = [
-  "./src"
-]
-
-# (Whitelist) Process ONLY these file extensions (e.g., [".cs", ".py"]).
-# Leave empty to process all files not matched by exclusion rules.
-include_extensions = []
-
-# (Blacklist) Skip files with these extensions.
-exclude_extensions = []
-
-# Skip directories with these names (case-insensitive).
-# Note: '.git' is always excluded automatically.
-exclude_dirs = []
-
-# Skip files with these names (case-insensitive).
-# Note: the output file, 'coalesce.toml', '.DS_Store', and 'Thumbs.db' are always excluded automatically.
-exclude_files = []
-```
-
----
-
-## 🎨 Presets
-
-Presets are built-in templates for `coalesce.toml` that help you get started quickly for common project types.
-
-**Available Presets**
-
-- `dotnet`: Configured for .NET projects (includes `.cs`, `.csproj`, `.slnx`, `.sln`, `.props`, etc., and excludes `bin`, `obj`, `.vs`, `artifacts`, `packages`).
-- `node`: Configured for Node.js projects (includes `.js`, `.ts`, `.jsx`, `.tsx`, etc., and excludes `node_modules`, `dist`, `build`, `.cache`, lock files).
-
-**Using a Preset**
-
-Use the `init` command with the `--preset` option:
-
-```sh
-coalesce init --preset node
-```
+Coalesce always skips the following automatically:
+- **Directories**: `.git`, `.vs`, `.idea`, `.vscode`, `bin`, `obj`, `artifacts`, `packages`, `TestResults`, `node_modules`, `dist`, `build`, `.next`, `.nuxt`, `.cache`, `coverage`, `__pycache__`, `.venv`, `venv`, `target`
+- **Files**: The output `.md` file itself, `.coalesce` (and the active `--config` file), `.DS_Store`, `Thumbs.db`, and common lockfiles (`package-lock.json`, `yarn.lock`, `pnpm-lock.yaml`, `bun.lock`, `Cargo.lock`, `poetry.lock`, `uv.lock`, `packages.lock.json`)
 
 ---
 

@@ -6,7 +6,7 @@ using System.ComponentModel;
 
 namespace Coalesce.Cli;
 
-[Description("Merge multiple source directories into a single target file using a TOML configuration file.")]
+[Description("Merge source files into a single Markdown context file.")]
 public sealed class MergeCommand : Command<MergeSettings>
 {
     protected override int Execute(CommandContext context, MergeSettings settings, CancellationToken cancellationToken)

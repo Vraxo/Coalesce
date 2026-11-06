@@ -6,7 +6,7 @@ namespace Coalesce.Cli;
 public sealed class MergeSettings : CommandSettings
 {
     [CommandOption("--config <CONFIG>")]
-    [Description("Path to a TOML configuration file. Defaults to 'coalesce.toml' in the current directory.")]
+    [Description("Path to a configuration file. Defaults to '.coalesce' in the current directory if present.")]
     public string? Config { get; init; }
 
     [CommandOption("--dry-run")]

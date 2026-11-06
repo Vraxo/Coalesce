@@ -1,0 +1,4 @@
+!Coalesce/
+!Coalesce.Tests/
+!*.cs
+!*.csproj

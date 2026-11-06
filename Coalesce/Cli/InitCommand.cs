@@ -1,15 +1,15 @@
-﻿using Coalesce.Configuration;
+using Coalesce.Configuration;
 using Spectre.Console.Cli;
 using System.ComponentModel;
 
 namespace Coalesce.Cli;
 
-[Description("Initialize a new configuration file in the current directory.")]
-public sealed class InitCommand : Command<InitSettings>
+[Description("Initialize a '.coalesce' configuration file in the current directory.")]
+public sealed class InitCommand : Command<EmptyCommandSettings>
 {
-    protected override int Execute(CommandContext context, InitSettings settings, CancellationToken cancellationToken)
+    protected override int Execute(CommandContext context, EmptyCommandSettings settings, CancellationToken cancellationToken)
     {
-        ConfigurationGenerator.GenerateDefaultConfig(settings.Preset);
+        ConfigurationGenerator.GenerateDefaultConfig();
         return 0;
     }
 }
