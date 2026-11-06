@@ -1,4 +1,4 @@
-﻿using Coalesce.Configuration;
+using Coalesce.Configuration;
 using Coalesce.Core;
 using Coalesce.Utils;
 using Spectre.Console.Cli;
@@ -6,7 +6,7 @@ using System.ComponentModel;
 
 namespace Coalesce.Cli;
 
-[Description("Merge multiple source directories and configuration presets into a single target file structure.")]
+[Description("Merge multiple source directories into a single target file using a TOML configuration file.")]
 public sealed class MergeCommand : Command<MergeSettings>
 {
     protected override int Execute(CommandContext context, MergeSettings settings, CancellationToken cancellationToken)
@@ -17,7 +17,7 @@ public sealed class MergeCommand : Command<MergeSettings>
             ? new FileInfo(settings.Config)
             : null;
 
-        AppOptions? options = ConfigurationProvider.Build(settings, configFile);
+        AppOptions? options = ConfigurationProvider.Build(configFile);
 
         if (options is null)
         {

@@ -15,13 +15,12 @@ This is a solo project, developed almost entirely by AI. It's built primarily fo
 ## ✅ Features
 
 - **Directory Merging**: Scans one or more source directories and merges all eligible files.
-- **Configuration File**: Easily configure options using a `coalesce.toml` file.
-- **Ad-Hoc CLI Mode**: Run merges directly from the command line using arguments and flags without needing a configuration file.
+- **Configuration File**: Easily configure all merge and filtering options using a `coalesce.toml` file.
 - **Smart Filtering**:
-  - Include files based on a whitelist of extensions (`--include-ext`).
-  - Exclude directories and files by name (`--exclude-dir`, `--exclude-file`).
-  - Exclude files by extension (`--exclude-ext`).
-- **Path-Only Mode**: Include the path of binary or irrelevant files without their content (`--path-only-ext`).
+  - Include files based on a whitelist of extensions (`IncludeExtensions`).
+  - Exclude directories and files by name (`ExcludeDirectoryNames`, `ExcludeFileNames`).
+  - Exclude files by extension (`ExcludeExtensions`).
+- **Path-Only Mode**: Include the path of binary or irrelevant files without their content (`PathOnlyExtensions`).
 - **Project Presets**: Quickly generate a `coalesce.toml` for common project types like `dotnet` and `node`.
 - **Dry Run Mode**: Preview which files will be included in the output without actually writing the file using the `--dry-run` flag.
 
@@ -98,34 +97,23 @@ The easiest way to get started is by using the `init` command in your project's 
 
 ### The `merge` Command
 
-This is the default command. Coalesce runs in one of two modes:
-
-- **Config Mode**: Used when `--config <CONFIG>` is specified, or when no positional CLI arguments (`[output-file]` / `[source-dirs]`) are passed and a `coalesce.toml` file exists in the current directory. All merge and filter options are loaded strictly from the TOML configuration file.
-- **Ad-Hoc CLI Mode**: Used when `[output-file]` and `[source-dirs...]` are provided on the command line (without `--config`). Configuration files are ignored and all filtering options are taken directly from CLI flags.
+This is the default command. It merges files using `coalesce.toml` in the current directory (or a custom TOML file provided via `--config`).
 
 **Syntax**
 
 ```sh
-coalesce [output-file] [source-dirs...] [options]
+coalesce [options]
 ```
-
-- `[output-file]`: (Optional) The path for the merged output file. Required if not using a config file.
-- `[source-dirs...]`: (Optional) One or more source directories to scan. Required if not using a config file.
 
 **Options**
 
-| Option                              | Description                                                                                                       | Mode            |
-| ----------------------------------- | ----------------------------------------------------------------------------------------------------------------- | --------------- |
-| `--config <CONFIG>`                 | Path to a TOML configuration file. Defaults to `coalesce.toml` in the current directory when no CLI args are set. | Config Mode     |
-| `--exclude-dir <EXCLUDE_DIR>`       | Excludes a directory by name (e.g., `node_modules`). Can be used multiple times.                                  | Ad-Hoc CLI Mode |
-| `--exclude-file <EXCLUDE_FILE>`     | Excludes a file by name (e.g., `package-lock.json`). Can be used multiple times.                                  | Ad-Hoc CLI Mode |
-| `--include-ext <INCLUDE_EXT>`       | Includes a file extension (e.g., `.md`). Can be used multiple times.                                              | Ad-Hoc CLI Mode |
-| `--exclude-ext <EXCLUDE_EXT>`       | Excludes a file extension (e.g., `.log`). Can be used multiple times.                                             | Ad-Hoc CLI Mode |
-| `--path-only-ext <PATH_ONLY_EXT>`   | Includes a file by path only, without its content (e.g., `.dll`). Can be used multiple times.                     | Ad-Hoc CLI Mode |
-| `--dry-run`                         | Simulates a merge, printing which files would be included without writing the output file.                        | Both            |
-| `--quiet`                           | Suppresses all informational output. Only warnings and errors will be displayed.                                  | Both            |
-| `--verbose`                         | Enables detailed output, showing why files are skipped and how configuration is applied.                          | Both            |
-| `-h`, `--help`                      | Show help and usage information.                                                                                  | Both            |
+| Option              | Description                                                                                      |
+| ------------------- | ------------------------------------------------------------------------------------------------ |
+| `--config <CONFIG>` | Path to a TOML configuration file. Defaults to `coalesce.toml` in the current directory.         |
+| `--dry-run`         | Simulates a merge, printing which files would be included without writing the output file.       |
+| `--quiet`           | Suppresses all informational output. Only warnings and errors will be displayed.                 |
+| `--verbose`         | Enables detailed output, showing why files are skipped and how configuration is applied.         |
+| `-h`, `--help`      | Show help and usage information.                                                                 |
 
 **Examples**
 
@@ -133,11 +121,11 @@ coalesce [output-file] [source-dirs...] [options]
 # Run using coalesce.toml in the current directory
 coalesce
 
+# Preview which files would be merged without writing the output file
+coalesce --dry-run
+
 # Run using a specific TOML configuration file
 coalesce --config custom-config.toml
-
-# Run in ad-hoc CLI mode with a specific output file, source directories, and filter flags
-coalesce docs/context.md ./src ./lib --include-ext .js --include-ext .css --exclude-dir dist
 ```
 
 ### Other Commands
