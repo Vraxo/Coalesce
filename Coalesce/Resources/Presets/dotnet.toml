@@ -1,58 +1,30 @@
 # .NET project preset for Coalesce.
-# Excludes common directories like 'bin', 'obj', and '.vs'.
 
-# Path for the final merged output file.
-OutputFilePath = "coalesce.md"
+output = "coalesce.md"
 
-# List of source directories to scan for files.
-SourceDirectoryPaths = [
-  "./MyProject/src"
+sources = [
+  "./src"
 ]
 
-# (Whitelist) To process ONLY specific file types, add their extensions here (e.g., ".cs", ".py").
-# If this list is empty, Coalesce processes ALL files not matched by other exclusion rules.
-IncludeExtensions = [
+include_extensions = [
   ".cs",
   ".csproj",
+  ".slnx",
   ".sln",
+  ".props",
   ".json",
+  ".toml",
   ".xml",
   ".md",
   ".txt"
 ]
 
-# (Blacklist) Explicitly skip files with these extensions.
-ExcludeExtensions = []
-
-# Skip directories with these names (case-insensitive).
-ExcludeDirectoryNames = [
+exclude_dirs = [
   "bin",
   "obj",
   ".vs",
-  "Properties",
-  ".git",
+  "artifacts",
   "packages"
 ]
 
-# Skip files with these names (case-insensitive).
-ExcludeFileNames = [
-  ".DS_Store",
-  "Thumbs.db",
-  "coalesce.toml"
-]
-
-# For these file types, only include their path in the output, not their content.
-# Useful for binary files like images, DLLs, etc.
-PathOnlyExtensions = [
-  ".png",
-  ".jpg",
-  ".jpeg",
-  ".gif",
-  ".svg",
-  ".ico",
-  ".dll",
-  ".exe",
-  ".so",
-  ".bin",
-  ".pdf"
-]
+exclude_files = []

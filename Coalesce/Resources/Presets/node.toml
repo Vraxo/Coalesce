@@ -1,17 +1,12 @@
 # Node.js project preset for Coalesce.
-# Excludes 'node_modules', build output directories, and common lock files.
 
-# Path for the final merged output file.
-OutputFilePath = "coalesce.md"
+output = "coalesce.md"
 
-# List of source directories to scan for files.
-SourceDirectoryPaths = [
+sources = [
   "./src"
 ]
 
-# (Whitelist) To process ONLY specific file types, add their extensions here (e.g., ".js", ".ts").
-# If this list is empty, Coalesce processes ALL files not matched by other exclusion rules.
-IncludeExtensions = [
+include_extensions = [
   ".js",
   ".jsx",
   ".ts",
@@ -24,37 +19,15 @@ IncludeExtensions = [
   ".txt"
 ]
 
-# (Blacklist) Explicitly skip files with these extensions.
-ExcludeExtensions = []
-
-# Skip directories with these names (case-insensitive).
-ExcludeDirectoryNames = [
+exclude_dirs = [
   "node_modules",
   "dist",
   "build",
-  ".cache",
-  ".git"
+  ".cache"
 ]
 
-# Skip files with these names (case-insensitive).
-ExcludeFileNames = [
-  ".DS_Store",
-  "Thumbs.db",
+exclude_files = [
   "package-lock.json",
   "yarn.lock",
-  "pnpm-lock.yaml",
-  "coalesce.toml"
-]
-
-# For these file types, only include their path in the output, not their content.
-# Useful for binary files like images, etc.
-PathOnlyExtensions = [
-  ".png",
-  ".jpg",
-  ".jpeg",
-  ".gif",
-  ".svg",
-  ".ico",
-  ".woff",
-  ".woff2"
+  "pnpm-lock.yaml"
 ]

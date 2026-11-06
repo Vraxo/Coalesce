@@ -1,4 +1,4 @@
-﻿using Coalesce.Configuration;
+using Coalesce.Configuration;
 using Coalesce.Utils;
 
 namespace Coalesce.Core;
@@ -88,7 +88,7 @@ public class DirectoryMerger
             {
                 try
                 {
-                    outputGenerator.WriteFileEntry(filePath, _options);
+                    outputGenerator.WriteFileEntry(filePath);
                     totalFilesProcessed++;
                 }
                 catch (IOException ex)

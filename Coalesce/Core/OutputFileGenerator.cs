@@ -1,9 +1,9 @@
-﻿using Coalesce.Configuration;
-
 namespace Coalesce.Core;
 
 public class OutputFileGenerator(TextWriter writer)
 {
+    private const int BinaryCheckBufferSize = 8192;
+
     private static readonly Dictionary<string, string> s_languageMap = new(StringComparer.OrdinalIgnoreCase)
     {
         // Web
@@ -21,16 +21,39 @@ public class OutputFileGenerator(TextWriter writer)
         // C# / .NET
         { ".cs", "csharp" },
         { ".csproj", "xml" },
-        
+        { ".props", "xml" },
+        { ".targets", "xml" },
+        { ".slnx", "xml" },
+
         // Other
         { ".py", "python" },
         { ".java", "java" },
         { ".sh", "shell" },
         { ".bat", "batch" },
         { ".ps1", "powershell" },
+        { ".toml", "toml" },
         { ".yaml", "yaml" },
         { ".yml", "yaml" },
         { ".txt", "text" },
+    };
+
+    private static readonly HashSet<string> s_binaryExtensions = new(StringComparer.OrdinalIgnoreCase)
+    {
+        // Images & Icons
+        ".png", ".jpg", ".jpeg", ".gif", ".bmp", ".ico", ".webp", ".avif", ".tiff",
+
+        // Fonts
+        ".woff", ".woff2", ".ttf", ".otf", ".eot",
+
+        // Executables, Libraries & Symbols
+        ".dll", ".exe", ".pdb", ".so", ".dylib", ".bin", ".class", ".jar", ".wasm",
+
+        // Archives & Packages
+        ".zip", ".tar", ".gz", ".tgz", ".bz2", ".xz", ".7z", ".rar", ".nupkg", ".snupkg",
+
+        // Documents & Media
+        ".pdf", ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx",
+        ".mp3", ".mp4", ".wav", ".ogg", ".flac", ".webm", ".avi", ".mov"
     };
 
     private static string GetLanguageIdentifier(string fileExtension)
@@ -38,7 +61,7 @@ public class OutputFileGenerator(TextWriter writer)
         return s_languageMap.GetValueOrDefault(fileExtension, string.Empty);
     }
 
-    public void WriteFileEntry(string filePath, AppOptions options)
+    public void WriteFileEntry(string filePath)
     {
         try
         {
@@ -50,7 +73,7 @@ public class OutputFileGenerator(TextWriter writer)
             writer.WriteLine($"### `{relativePath}`");
             writer.WriteLine(); // Blank line for spacing after header
 
-            if (options.PathOnlyExtensions.Contains(fileExtension, StringComparer.OrdinalIgnoreCase))
+            if (IsBinaryFile(filePath, fileExtension))
             {
                 writer.WriteLine($"<!-- Content of binary file '{Path.GetFileName(filePath)}' not included. -->");
             }
@@ -75,5 +98,19 @@ public class OutputFileGenerator(TextWriter writer)
         {
             throw new IOException($"Could not process file '{filePath}'.", ex);
         }
+    }
+
+    private static bool IsBinaryFile(string filePath, string fileExtension)
+    {
+        if (s_binaryExtensions.Contains(fileExtension))
+        {
+            return true;
+        }
+
+        using FileStream stream = new(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+        byte[] buffer = new byte[BinaryCheckBufferSize];
+        int bytesRead = stream.Read(buffer, 0, buffer.Length);
+
+        return buffer.AsSpan(0, bytesRead).Contains((byte)0);
     }
 }
