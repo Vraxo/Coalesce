@@ -1,4 +1,4 @@
-﻿using AwesomeAssertions;
+using AwesomeAssertions;
 using Coalesce.Configuration;
 using Coalesce.Core;
 using System.Text;
@@ -57,6 +57,9 @@ public class OutputFileGeneratorTests : IDisposable
             public class Test {}
             ```
 
+            ---
+
+
             """;
 
         generator.WriteFileEntry(_tempCsFilePath, _options);
@@ -77,6 +80,9 @@ public class OutputFileGeneratorTests : IDisposable
             ### `{{relativePath}}`
 
             <!-- Content of binary file 'logo.png' not included. -->
+
+            ---
+
 
             """;
 
@@ -100,6 +106,9 @@ public class OutputFileGeneratorTests : IDisposable
             ```
             some data
             ```
+
+            ---
+
 
             """;
 
