@@ -15,23 +15,21 @@ This is a solo project, developed almost entirely by AI. It's built primarily fo
 ## ✅ Features
 
 - **Directory Merging**: Scans one or more source directories and merges all eligible files.
-- **Configuration File**: Easily configure options using a `coalesce.yaml` file.
-- **CLI Overrides**: All configuration options can be overridden with command-line arguments for flexibility.
+- **Configuration File**: Easily configure options using a `coalesce.toml` file.
+- **Ad-Hoc CLI Mode**: Run merges directly from the command line using arguments and flags without needing a configuration file.
 - **Smart Filtering**:
   - Include files based on a whitelist of extensions (`--include-ext`).
   - Exclude directories and files by name (`--exclude-dir`, `--exclude-file`).
   - Exclude files by extension (`--exclude-ext`).
 - **Path-Only Mode**: Include the path of binary or irrelevant files without their content (`--path-only-ext`).
-- **Project Presets**: Quickly generate a `coalesce.yaml` for common project types like `dotnet` and `node`.
-- **Custom Presets**: Create your own presets for your specific project structures.
+- **Project Presets**: Quickly generate a `coalesce.toml` for common project types like `dotnet` and `node`.
 - **Dry Run Mode**: Preview which files will be included in the output without actually writing the file using the `--dry-run` flag.
-- **Cross-Platform**: Generates OS-specific run scripts (`coalesce-run.bat` or `coalesce-run.sh`) for ease of use.
 
 ---
 
 ## 📥 Installation
 
-**Platform Support Note:** Coalesce is developed and tested primarily on **Windows** 🖥️. While the core functionality is intended to be cross-platform, its behavior on macOS and Linux has not been verified. Some features, like the automatic `install-path` command, are Windows-specific.
+**Platform Support Note:** Coalesce is developed and tested primarily on **Windows** 🖥️. While the core functionality is intended to be cross-platform, its behavior on macOS and Linux has not been verified. Some features, like the automatic `install` command, are Windows-specific.
 
 1. Download the latest executable for your operating system from the **Releases** page.
 2. Place the executable in a directory of your choice.
@@ -40,7 +38,7 @@ This is a solo project, developed almost entirely by AI. It's built primarily fo
 For Windows users, you can use the built-in command to add Coalesce to your user PATH automatically:
 
 ```sh
-coalesce install-path
+coalesce install
 ```
 
 *You may need to restart your terminal for the PATH change to take effect.*
@@ -53,7 +51,7 @@ The easiest way to get started is by using the `init` command in your project's 
 
 1. **Initialize Configuration**
    
-   This command creates a default `coalesce.yaml` file and an appropriate run script (`.bat` or `.sh`).
+   This command creates a default `coalesce.toml` file in the current directory.
    
    ```sh
    coalesce init
@@ -69,23 +67,24 @@ The easiest way to get started is by using the `init` command in your project's 
    coalesce init --preset dotnet
    ```
 
-2. **Customize `coalesce.yaml`**
+2. **Customize `coalesce.toml`**
    
-   Open the newly created `coalesce.yaml` and edit the `sourceDirectoryPaths` and other options to match your project structure.
+   Open the newly created `coalesce.toml` and edit `SourceDirectoryPaths` and other options to match your project structure.
    
-   ```yaml
+   ```toml
    # Path for the final merged output file.
-   outputFilePath: coalesce.md
+   OutputFilePath = "coalesce.md"
    
    # List of source directories to scan for files.
-   sourceDirectoryPaths:
-     - ./src
-     # - ./another-source-folder
+   SourceDirectoryPaths = [
+     "./src",
+     # "./another-source-folder"
+   ]
    ```
 
 3. **Run the Merge**
    
-   Simply execute the main command. It will automatically find and use your `coalesce.yaml` file.
+   Simply execute the main command. It will automatically find and use your `coalesce.toml` file.
    
    ```sh
    coalesce
@@ -99,7 +98,10 @@ The easiest way to get started is by using the `init` command in your project's 
 
 ### The `merge` Command
 
-This is the default command. It merges files based on configuration from `coalesce.yaml` and any command-line overrides.
+This is the default command. Coalesce runs in one of two modes:
+
+- **Config Mode**: Used when `--config <CONFIG>` is specified, or when no positional CLI arguments (`[output-file]` / `[source-dirs]`) are passed and a `coalesce.toml` file exists in the current directory. All merge and filter options are loaded strictly from the TOML configuration file.
+- **Ad-Hoc CLI Mode**: Used when `[output-file]` and `[source-dirs...]` are provided on the command line (without `--config`). Configuration files are ignored and all filtering options are taken directly from CLI flags.
 
 **Syntax**
 
@@ -107,54 +109,50 @@ This is the default command. It merges files based on configuration from `coales
 coalesce [output-file] [source-dirs...] [options]
 ```
 
-- `[output-file]`: (Optional) The path for the merged output file. **Overrides** the value in `coalesce.yaml`.
-- `[source-dirs...]`: (Optional) One or more source directories to scan. **Overrides** the list in `coalesce.yaml`.
+- `[output-file]`: (Optional) The path for the merged output file. Required if not using a config file.
+- `[source-dirs...]`: (Optional) One or more source directories to scan. Required if not using a config file.
 
 **Options**
 
-| Option                  | Description                                                                               | Behavior with `coalesce.yaml`             |
-| ----------------------- | ----------------------------------------------------------------------------------------- | ----------------------------------------- |
-| `--config <path>`       | Path to a specific YAML configuration file.                                               |                                           |
-| `--exclude-dir <name>`  | Excludes a directory by name (e.g., 'node_modules'). Can be used multiple times.          | **Adds to** the list in the config file.  |
-| `--exclude-file <name>` | Excludes a file by name (e.g., 'yarn.lock'). Can be used multiple times.                  | **Adds to** the list in the config file.  |
-| `--include-ext <ext>`   | Includes only files with this extension (e.g., '.md'). Can be used multiple times.        | **Replaces** the list in the config file. |
-| `--exclude-ext <ext>`   | Excludes files with this extension (e.g., '.log'). Can be used multiple times.            | **Adds to** the list in the config file.  |
-| `--path-only-ext <ext>` | Includes a file by path only, without content (e.g., '.dll'). Can be used multiple times. | **Adds to** the list in the config file.  |
-| `--dry-run`             | Simulates a merge, printing which files would be included.                                |                                           |
-| `-q`, `--quiet`         | Suppresses all informational output.                                                      |                                           |
-| `-v`, `--verbose`       | Enables detailed output, showing why files are skipped.                                   |                                           |
-| `--help`                | Show help and usage information.                                                          |                                           |
+| Option                              | Description                                                                                                       | Mode            |
+| ----------------------------------- | ----------------------------------------------------------------------------------------------------------------- | --------------- |
+| `--config <CONFIG>`                 | Path to a TOML configuration file. Defaults to `coalesce.toml` in the current directory when no CLI args are set. | Config Mode     |
+| `--exclude-dir <EXCLUDE_DIR>`       | Excludes a directory by name (e.g., `node_modules`). Can be used multiple times.                                  | Ad-Hoc CLI Mode |
+| `--exclude-file <EXCLUDE_FILE>`     | Excludes a file by name (e.g., `package-lock.json`). Can be used multiple times.                                  | Ad-Hoc CLI Mode |
+| `--include-ext <INCLUDE_EXT>`       | Includes a file extension (e.g., `.md`). Can be used multiple times.                                              | Ad-Hoc CLI Mode |
+| `--exclude-ext <EXCLUDE_EXT>`       | Excludes a file extension (e.g., `.log`). Can be used multiple times.                                             | Ad-Hoc CLI Mode |
+| `--path-only-ext <PATH_ONLY_EXT>`   | Includes a file by path only, without its content (e.g., `.dll`). Can be used multiple times.                     | Ad-Hoc CLI Mode |
+| `--dry-run`                         | Simulates a merge, printing which files would be included without writing the output file.                        | Both            |
+| `--quiet`                           | Suppresses all informational output. Only warnings and errors will be displayed.                                  | Both            |
+| `--verbose`                         | Enables detailed output, showing why files are skipped and how configuration is applied.                          | Both            |
+| `-h`, `--help`                      | Show help and usage information.                                                                                  | Both            |
 
-**Example**
+**Examples**
 
 ```sh
-# Run using the config file, but add 'dist' to the excluded directories
-coalesce --exclude-dir dist
+# Run using coalesce.toml in the current directory
+coalesce
 
-# Run with a specific output file and source, ignoring the config for those values
-coalesce docs/context.md ./src ./lib --include-ext .js .css
+# Run using a specific TOML configuration file
+coalesce --config custom-config.toml
+
+# Run in ad-hoc CLI mode with a specific output file, source directories, and filter flags
+coalesce docs/context.md ./src ./lib --include-ext .js --include-ext .css --exclude-dir dist
 ```
 
 ### Other Commands
 
 #### `init`
 
-Generates a `coalesce.yaml` configuration file and a run script.
+Generates a `coalesce.toml` configuration file in the current directory.
 
 ```sh
-coalesce init [--preset <name>]
+coalesce init [--preset <PRESET>]
 ```
 
-- `--preset`: (Optional) Initializes the config from a built-in (`dotnet`, `node`) or custom preset.
+- `--preset <PRESET>`: (Optional) Initializes `coalesce.toml` from a built-in preset template (`dotnet`, `node`).
 
-#### `preset`
-
-Manages configuration presets.
-
-- `coalesce preset list`: Lists all available built-in and custom presets.
-- `coalesce preset path`: Displays the path to the user's custom presets directory.
-
-#### `install-path` / `uninstall-path`
+#### `install` / `uninstall`
 
 Manages the application's presence in the system PATH.
 
@@ -163,89 +161,80 @@ Manages the application's presence in the system PATH.
 
 ---
 
-## 📝 Configuration (`coalesce.yaml`)
+## 📝 Configuration (`coalesce.toml`)
 
-The `coalesce.yaml` file is the primary way to configure the tool for a project. The `init` command generates this file for you.
+The `coalesce.toml` file is the primary way to configure the tool for a project. The `init` command generates this file for you.
 
-Here is an example of the default configuration:
+Here is the default configuration:
 
-```yaml
+```toml
 # Default configuration for Coalesce.
 # Use 'coalesce init --preset <name>' for project-specific templates (e.g., dotnet, node).
 
 # Path for the final merged output file.
-outputFilePath: coalesce.md
+OutputFilePath = "coalesce.md"
 
 # List of source directories to scan for files.
-sourceDirectoryPaths:
-  - ./src
+SourceDirectoryPaths = [
+  "./src"
+]
 
 # (Whitelist) To process ONLY specific file types, add their extensions here (e.g., ".cs", ".py").
 # If this list is empty, Coalesce processes ALL files not matched by other exclusion rules.
-includeExtensions: []
+IncludeExtensions = []
 
 # (Blacklist) Explicitly skip files with these extensions.
-excludeExtensions: []
+ExcludeExtensions = []
 
 # Skip directories with these names (case-insensitive).
-excludeDirectoryNames:
-  - .git
+ExcludeDirectoryNames = [
+  ".git"
+]
 
 # Skip files with these names (case-insensitive).
-excludeFileNames:
-  - .DS_Store
-  - Thumbs.db
-  - coalesce.yaml
+ExcludeFileNames = [
+  ".DS_Store",
+  "Thumbs.db",
+  "coalesce.toml"
+]
 
 # For these file types, only include their path in the output, not their content.
 # Useful for binary files like images, DLLs, etc.
-pathOnlyExtensions:
-  - .png
-  - .jpg
-  - .jpeg
-  - .gif
-  - .bmp
-  - .svg
-  - .ico
-  - .webp
-  - .dll
-  - .exe
+PathOnlyExtensions = [
+  ".png",
+  ".jpg",
+  ".jpeg",
+  ".gif",
+  ".bmp",
+  ".svg",
+  ".ico",
+  ".webp",
+  ".dll",
+  ".exe",
+  ".so",
+  ".bin",
+  ".pdf"
+]
 ```
 
 ---
 
 ## 🎨 Presets
 
-Presets are templates for `coalesce.yaml` that help you get started quickly.
+Presets are built-in templates for `coalesce.toml` that help you get started quickly for common project types.
+
+**Available Presets**
+
+- `dotnet`: Configured for .NET projects (includes `.cs`, `.csproj`, `.sln`, etc., and excludes `bin`, `obj`, `.vs`, `packages`).
+- `node`: Configured for Node.js projects (includes `.js`, `.ts`, `.jsx`, `.tsx`, etc., and excludes `node_modules`, `dist`, `build`, lock files).
 
 **Using a Preset**
+
 Use the `init` command with the `--preset` option:
 
 ```sh
 coalesce init --preset node
 ```
-
-**Creating a Custom Preset**
-
-1. Find your presets directory:
-   
-   ```sh
-   coalesce preset path
-   ```
-
-2. Navigate to that directory.
-
-3. Copy the `_template.yaml` file to a new file, for example `my-preset.yaml`.
-
-4. Customize `my-preset.yaml` to your needs.
-
-You can now use your custom preset:
-
-```sh
-coalesce init --preset my-preset
-```
-
-Your custom preset will now also appear when you run `coalesce preset list`.
 
 ---
 
