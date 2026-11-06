@@ -7,14 +7,42 @@ public class FileFilter
 {
     private static readonly HashSet<string> s_defaultExcludedDirectories = new(StringComparer.OrdinalIgnoreCase)
     {
-        ".git"
+        ".git",
+        ".vs",
+        ".idea",
+        ".vscode",
+        "bin",
+        "obj",
+        "artifacts",
+        "packages",
+        "TestResults",
+        "node_modules",
+        "dist",
+        "build",
+        ".next",
+        ".nuxt",
+        ".cache",
+        "coverage",
+        "__pycache__",
+        ".venv",
+        "venv",
+        "target"
     };
 
     private static readonly HashSet<string> s_defaultExcludedFileNames = new(StringComparer.OrdinalIgnoreCase)
     {
         ".DS_Store",
         "Thumbs.db",
-        "coalesce.toml"
+        ".coalesce",
+        "package-lock.json",
+        "yarn.lock",
+        "pnpm-lock.yaml",
+        "bun.lockb",
+        "bun.lock",
+        "Cargo.lock",
+        "poetry.lock",
+        "uv.lock",
+        "packages.lock.json"
     };
 
     private readonly AppOptions _options;
@@ -129,7 +157,7 @@ public class FileFilter
 
         if (_options.ExcludeExtensions.Contains(fileExtension, StringComparer.OrdinalIgnoreCase))
         {
-            Log.Verbose($"Skipping '{Path.GetFileName(filePath)}' due to 'exclude_extensions' rule for '{fileExtension}'.");
+            Log.Verbose($"Skipping '{Path.GetFileName(filePath)}' due to excluded extension '{fileExtension}'.");
             return true;
         }
 
@@ -146,7 +174,7 @@ public class FileFilter
         string fileExtension = Path.GetExtension(filePath);
         if (!_options.IncludeExtensions.Contains(fileExtension, StringComparer.OrdinalIgnoreCase))
         {
-            Log.Verbose($"Skipping '{Path.GetFileName(filePath)}' because its extension ('{fileExtension}') is not in 'include_extensions'.");
+            Log.Verbose($"Skipping '{Path.GetFileName(filePath)}' because its extension ('{fileExtension}') is not in the included extensions list.");
             return true;
         }
 

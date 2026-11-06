@@ -14,11 +14,11 @@ public class FileFilterTests
         _options = new AppOptions
         {
             OutputFilePath = "/output/merged.txt",
-            ConfigFilePath = "/project/custom-config.toml",
+            ConfigFilePath = "/project/custom.coalesce",
             IncludeExtensions = [".cs", ".html", ".json"],
             ExcludeExtensions = [".tmp", ".bak"],
-            ExcludeDirectoryNames = ["bin", "obj"],
-            ExcludeFileNames = ["package-lock.json"]
+            ExcludeDirectoryNames = ["legacy"],
+            ExcludeFileNames = ["secret.json"]
         };
     }
 
@@ -37,7 +37,7 @@ public class FileFilterTests
     public void ShouldSkip_WhenFilePathIsTheConfigFile_ReturnsTrue()
     {
         FileFilter filter = new(_options);
-        string filePath = "/project/custom-config.toml";
+        string filePath = "/project/custom.coalesce";
 
         bool result = filter.ShouldSkip(filePath, "/project");
 
@@ -55,29 +55,30 @@ public class FileFilterTests
 
         filter.ShouldSkip("/project/src/.DS_Store", "/project/src").Should().BeTrue();
         filter.ShouldSkip("/project/src/Thumbs.db", "/project/src").Should().BeTrue();
-        filter.ShouldSkip("/project/src/coalesce.toml", "/project/src").Should().BeTrue();
+        filter.ShouldSkip("/project/src/.coalesce", "/project/src").Should().BeTrue();
+        filter.ShouldSkip("/project/src/package-lock.json", "/project/src").Should().BeTrue();
     }
 
     [Fact]
-    public void ShouldSkip_WhenFileIsInDefaultExcludedGitDirectory_ReturnsTrue()
+    public void ShouldSkip_WhenFileIsInDefaultExcludedDirectory_ReturnsTrue()
     {
         AppOptions optionsWithNoIncludes = new()
         {
             OutputFilePath = "/output/merged.txt"
         };
         FileFilter filter = new(optionsWithNoIncludes);
-        string filePath = "/project/src/.git/config";
 
-        bool result = filter.ShouldSkip(filePath, "/project/src");
-
-        result.Should().BeTrue();
+        filter.ShouldSkip("/project/src/.git/config", "/project/src").Should().BeTrue();
+        filter.ShouldSkip("/project/src/bin/debug/app.cs", "/project/src").Should().BeTrue();
+        filter.ShouldSkip("/project/src/obj/project.assets.json", "/project/src").Should().BeTrue();
+        filter.ShouldSkip("/project/src/node_modules/pkg/index.js", "/project/src").Should().BeTrue();
     }
 
     [Fact]
     public void ShouldSkip_WhenFileIsInAnExcludedDirectory_ReturnsTrue()
     {
         FileFilter filter = new(_options);
-        string filePath = "/project/src/bin/debug/app.cs";
+        string filePath = "/project/src/legacy/old.cs";
 
         bool result = filter.ShouldSkip(filePath, "/project/src");
 
@@ -88,7 +89,7 @@ public class FileFilterTests
     public void ShouldSkip_WhenFileHasAnExcludedFileName_ReturnsTrue()
     {
         FileFilter filter = new(_options);
-        string filePath = "/project/src/package-lock.json";
+        string filePath = "/project/src/secret.json";
 
         bool result = filter.ShouldSkip(filePath, "/project/src");
 
@@ -135,7 +136,7 @@ public class FileFilterTests
         {
             OutputFilePath = "/output/merged.txt",
             IncludeExtensions = [],
-            ExcludeDirectoryNames = ["bin"]
+            ExcludeDirectoryNames = ["legacy"]
         };
         FileFilter filter = new(optionsWithNoIncludes);
         string filePath = "/project/src/README.md";

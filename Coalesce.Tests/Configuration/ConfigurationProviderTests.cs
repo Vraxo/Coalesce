@@ -6,153 +6,101 @@ namespace Coalesce.Tests.Configuration;
 
 public class ConfigurationProviderTests : IDisposable
 {
-    private readonly string _tempConfigFile;
-    private readonly string _defaultOutputConfigFile;
-    private readonly string _malformedConfigFile;
+    private readonly string _tempDir;
+    private readonly string _defaultNamedConfigFile;
+    private readonly string _customNamedConfigFile;
     private readonly string _emptyConfigFile;
-    private readonly string _missingSourcesConfigFile;
-    private readonly string _emptyOutputConfigFile;
 
     public ConfigurationProviderTests()
     {
-        // Valid TOML config with all fields specified
-        _tempConfigFile = Path.GetTempFileName();
-        string tomlContent = """
-            output = "from-config.txt"
-            sources = [
-              "./config-src-1",
-              "./config-src-2"
-            ]
-            exclude_dirs = [
-              "node_modules",
-              "dist"
-            ]
-            exclude_files = [
-              "package-lock.json"
-            ]
-            include_extensions = [
-              ".toml",
-              ".json"
-            ]
-            exclude_extensions = [
-              ".tmp"
-            ]
-            """;
-        File.WriteAllText(_tempConfigFile, tomlContent);
+        _tempDir = Path.Combine(Path.GetTempPath(), "CoalesceConfigTest_" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(_tempDir);
 
-        // Config omitting 'output' (should default to "coalesce.md")
-        _defaultOutputConfigFile = Path.GetTempFileName();
-        File.WriteAllText(_defaultOutputConfigFile, """
-            sources = ["./src"]
+        _defaultNamedConfigFile = Path.Combine(_tempDir, ".coalesce");
+        File.WriteAllText(_defaultNamedConfigFile, """
+            # Comment line
+            !./config-src-1
+            !./config-src-2/
+            !*.cs
+            !.json
+
+            docs/
+            *.tmp
+            secret.txt
             """);
 
-        // Malformed TOML config (unclosed brackets/quotes)
-        _malformedConfigFile = Path.GetTempFileName();
-        File.WriteAllText(_malformedConfigFile, "output = \"from-config.txt\nsources = [");
-
-        // Empty file
-        _emptyConfigFile = Path.GetTempFileName();
-        File.WriteAllText(_emptyConfigFile, string.Empty);
-
-        // Config missing sources
-        _missingSourcesConfigFile = Path.GetTempFileName();
-        File.WriteAllText(_missingSourcesConfigFile, """
-            output = "from-config.txt"
-            sources = []
+        _customNamedConfigFile = Path.Combine(_tempDir, "api.coalesce");
+        File.WriteAllText(_customNamedConfigFile, """
+            +src/api/
+            +*.ts
+            *.spec.ts
             """);
 
-        // Config with explicitly empty output
-        _emptyOutputConfigFile = Path.GetTempFileName();
-        File.WriteAllText(_emptyOutputConfigFile, """
-            output = ""
-            sources = ["./src"]
+        _emptyConfigFile = Path.Combine(_tempDir, "empty.coalesce");
+        File.WriteAllText(_emptyConfigFile, """
+            # Only comments and whitespace
+
             """);
     }
 
     public void Dispose()
     {
-        File.Delete(_tempConfigFile);
-        File.Delete(_defaultOutputConfigFile);
-        File.Delete(_malformedConfigFile);
-        File.Delete(_emptyConfigFile);
-        File.Delete(_missingSourcesConfigFile);
-        File.Delete(_emptyOutputConfigFile);
+        if (Directory.Exists(_tempDir))
+        {
+            Directory.Delete(_tempDir, recursive: true);
+        }
+
         GC.SuppressFinalize(this);
     }
 
     [Fact]
-    public void Build_WithValidConfigFile_LoadsOptionsFromConfigFileExactly()
+    public void Build_WithDefaultNamedConfigFile_LoadsRulesAndUsesCoalesceMdOutput()
     {
-        FileInfo configFile = new(_tempConfigFile);
+        FileInfo configFile = new(_defaultNamedConfigFile);
 
         AppOptions? options = ConfigurationProvider.Build(configFile);
 
         options.Should().NotBeNull();
-        options!.OutputFilePath.Should().Be("from-config.txt");
+        options!.OutputFilePath.Should().Be("coalesce.md");
         options.ConfigFilePath.Should().Be(configFile.FullName);
         options.SourceDirectoryPaths.Should().HaveCount(2).And.ContainInOrder("./config-src-1", "./config-src-2");
-        options.ExcludeDirectoryNames.Should().HaveCount(2).And.ContainInOrder("node_modules", "dist");
-        options.ExcludeFileNames.Should().BeEquivalentTo("package-lock.json");
-        options.IncludeExtensions.Should().BeEquivalentTo(".toml", ".json");
+        options.IncludeExtensions.Should().BeEquivalentTo(".cs", ".json");
+        options.ExcludeDirectoryNames.Should().BeEquivalentTo("docs", "secret.txt");
+        options.ExcludeFileNames.Should().BeEquivalentTo("secret.txt");
         options.ExcludeExtensions.Should().BeEquivalentTo(".tmp");
     }
 
     [Fact]
-    public void Build_WhenOutputIsOmitted_UsesDefaultOutputFilePath()
+    public void Build_WithCustomNamedConfigFile_DerivesOutputFileNameFromConfigName()
     {
-        FileInfo configFile = new(_defaultOutputConfigFile);
+        FileInfo configFile = new(_customNamedConfigFile);
 
         AppOptions? options = ConfigurationProvider.Build(configFile);
 
         options.Should().NotBeNull();
-        options!.OutputFilePath.Should().Be(AppOptions.DefaultOutputFilePath);
-        options.SourceDirectoryPaths.Should().BeEquivalentTo("./src");
+        options!.OutputFilePath.Should().Be("api.md");
+        options.SourceDirectoryPaths.Should().BeEquivalentTo("src/api");
+        options.IncludeExtensions.Should().BeEquivalentTo(".ts");
     }
 
     [Fact]
-    public void Build_WhenSourceDirectoriesEmpty_FailsValidationAndReturnsNull()
-    {
-        FileInfo configFile = new(_missingSourcesConfigFile);
-
-        AppOptions? options = ConfigurationProvider.Build(configFile);
-
-        options.Should().BeNull();
-    }
-
-    [Fact]
-    public void Build_WhenOutputFilePathEmpty_FailsValidationAndReturnsNull()
-    {
-        FileInfo configFile = new(_emptyOutputConfigFile);
-
-        AppOptions? options = ConfigurationProvider.Build(configFile);
-
-        options.Should().BeNull();
-    }
-
-    [Fact]
-    public void Build_WithMalformedTomlFile_ReturnsNull()
-    {
-        FileInfo configFile = new(_malformedConfigFile);
-
-        AppOptions? options = ConfigurationProvider.Build(configFile);
-
-        options.Should().BeNull();
-    }
-
-    [Fact]
-    public void Build_WithEmptyConfigFile_LoadsEmptyConfigAndFailsValidation()
+    public void Build_WhenNoIncludeDirectoriesSpecified_DefaultsSourcesToCurrentDirectory()
     {
         FileInfo configFile = new(_emptyConfigFile);
 
         AppOptions? options = ConfigurationProvider.Build(configFile);
 
-        options.Should().BeNull();
+        options.Should().NotBeNull();
+        options!.OutputFilePath.Should().Be("empty.md");
+        options.SourceDirectoryPaths.Should().BeEquivalentTo(".");
+        options.IncludeExtensions.Should().BeEmpty();
+        options.ExcludeExtensions.Should().BeEmpty();
     }
 
     [Fact]
-    public void Build_WhenSpecifiedConfigFileNotFound_ReturnsNullAndFailsFast()
+    public void Build_WhenSpecifiedConfigFileNotFound_ReturnsNull()
     {
-        FileInfo nonExistentFile = new("non_existent_config.toml");
+        FileInfo nonExistentFile = new(Path.Combine(_tempDir, "non_existent.coalesce"));
 
         AppOptions? options = ConfigurationProvider.Build(nonExistentFile);
 

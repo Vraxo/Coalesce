@@ -1,0 +1,10 @@
+# Coalesce configuration (.coalesce)
+#
+# Plain lines exclude directories, files, or extensions (on top of built-in defaults):
+#   docs/
+#   *.log
+#   secret.json
+#
+# Lines starting with '!' (or '+') narrow the merge to specific directories or extensions:
+#   !src/
+#   !*.cs
