@@ -1,5 +1,4 @@
 using AwesomeAssertions;
-using Coalesce.Configuration;
 using Coalesce.Core;
 using System.Text;
 using Xunit;
@@ -11,8 +10,8 @@ public class OutputFileGeneratorTests : IDisposable
     private readonly string _tempTestRoot;
     private readonly string _tempCsFilePath;
     private readonly string _tempPngFilePath;
+    private readonly string _tempCustomBinaryFilePath;
     private readonly string _tempUnknownExtFilePath;
-    private readonly AppOptions _options;
 
     public OutputFileGeneratorTests()
     {
@@ -25,13 +24,11 @@ public class OutputFileGeneratorTests : IDisposable
         _tempPngFilePath = Path.Combine(_tempTestRoot, "logo.png");
         File.WriteAllBytes(_tempPngFilePath, [1, 2, 3]);
 
+        _tempCustomBinaryFilePath = Path.Combine(_tempTestRoot, "payload.dat");
+        File.WriteAllBytes(_tempCustomBinaryFilePath, [0x48, 0x65, 0x00, 0x6C]);
+
         _tempUnknownExtFilePath = Path.Combine(_tempTestRoot, "file.unknown");
         File.WriteAllText(_tempUnknownExtFilePath, "some data");
-
-        _options = new()
-        {
-            PathOnlyExtensions = [".png"]
-        };
     }
 
     public void Dispose()
@@ -62,7 +59,7 @@ public class OutputFileGeneratorTests : IDisposable
 
             """;
 
-        generator.WriteFileEntry(_tempCsFilePath, _options);
+        generator.WriteFileEntry(_tempCsFilePath);
         string result = stringBuilder.ToString().ReplaceLineEndings("\n");
         expectedOutput = expectedOutput.ReplaceLineEndings("\n");
 
@@ -70,7 +67,7 @@ public class OutputFileGeneratorTests : IDisposable
     }
 
     [Fact]
-    public void WriteFileEntry_ForPathOnlyFile_WritesMarkdownFormatWithComment()
+    public void WriteFileEntry_ForBinaryExtensionFile_WritesMarkdownFormatWithComment()
     {
         StringBuilder stringBuilder = new();
         using StringWriter stringWriter = new(stringBuilder);
@@ -86,7 +83,31 @@ public class OutputFileGeneratorTests : IDisposable
 
             """;
 
-        generator.WriteFileEntry(_tempPngFilePath, _options);
+        generator.WriteFileEntry(_tempPngFilePath);
+        string result = stringBuilder.ToString().ReplaceLineEndings("\n");
+        expectedOutput = expectedOutput.ReplaceLineEndings("\n");
+
+        result.Should().Be(expectedOutput);
+    }
+
+    [Fact]
+    public void WriteFileEntry_ForNullByteBinaryFile_WritesMarkdownFormatWithComment()
+    {
+        StringBuilder stringBuilder = new();
+        using StringWriter stringWriter = new(stringBuilder);
+        OutputFileGenerator generator = new(stringWriter);
+        string relativePath = Path.GetRelativePath(Environment.CurrentDirectory, _tempCustomBinaryFilePath);
+        string expectedOutput = $$"""
+            ### `{{relativePath}}`
+
+            <!-- Content of binary file 'payload.dat' not included. -->
+
+            ---
+
+
+            """;
+
+        generator.WriteFileEntry(_tempCustomBinaryFilePath);
         string result = stringBuilder.ToString().ReplaceLineEndings("\n");
         expectedOutput = expectedOutput.ReplaceLineEndings("\n");
 
@@ -112,7 +133,7 @@ public class OutputFileGeneratorTests : IDisposable
 
             """;
 
-        generator.WriteFileEntry(_tempUnknownExtFilePath, _options);
+        generator.WriteFileEntry(_tempUnknownExtFilePath);
         string result = stringBuilder.ToString().ReplaceLineEndings("\n");
         expectedOutput = expectedOutput.ReplaceLineEndings("\n");
 

@@ -1,47 +1,25 @@
 # Default configuration for Coalesce.
 # Use 'coalesce init --preset <name>' for project-specific templates (e.g., dotnet, node).
 
-# Path for the final merged output file.
-OutputFilePath = "coalesce.md"
+# Path for the final merged output file (defaults to "coalesce.md" if omitted).
+output = "coalesce.md"
 
 # List of source directories to scan for files.
-SourceDirectoryPaths = [
+sources = [
   "./src"
 ]
 
-# (Whitelist) To process ONLY specific file types, add their extensions here (e.g., ".cs", ".py").
-# If this list is empty, Coalesce processes ALL files not matched by other exclusion rules.
-IncludeExtensions = []
+# (Whitelist) Process ONLY these file extensions (e.g., [".cs", ".py"]).
+# Leave empty to process all files not matched by exclusion rules.
+include_extensions = []
 
-# (Blacklist) Explicitly skip files with these extensions.
-ExcludeExtensions = []
+# (Blacklist) Skip files with these extensions.
+exclude_extensions = []
 
 # Skip directories with these names (case-insensitive).
-ExcludeDirectoryNames = [
-  ".git"
-]
+# Note: '.git' is always excluded automatically.
+exclude_dirs = []
 
 # Skip files with these names (case-insensitive).
-ExcludeFileNames = [
-  ".DS_Store",
-  "Thumbs.db",
-  "coalesce.toml"
-]
-
-# For these file types, only include their path in the output, not their content.
-# Useful for binary files like images, DLLs, etc.
-PathOnlyExtensions = [
-  ".png",
-  ".jpg",
-  ".jpeg",
-  ".gif",
-  ".bmp",
-  ".svg",
-  ".ico",
-  ".webp",
-  ".dll",
-  ".exe",
-  ".so",
-  ".bin",
-  ".pdf"
-]
+# Note: the output file, 'coalesce.toml', '.DS_Store', and 'Thumbs.db' are always excluded automatically.
+exclude_files = []

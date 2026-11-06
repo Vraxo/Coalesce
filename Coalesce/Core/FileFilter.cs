@@ -1,10 +1,22 @@
-﻿using Coalesce.Configuration;
+using Coalesce.Configuration;
 using Coalesce.Utils;
 
 namespace Coalesce.Core;
 
 public class FileFilter
 {
+    private static readonly HashSet<string> s_defaultExcludedDirectories = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ".git"
+    };
+
+    private static readonly HashSet<string> s_defaultExcludedFileNames = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ".DS_Store",
+        "Thumbs.db",
+        "coalesce.toml"
+    };
+
     private readonly AppOptions _options;
 
     public FileFilter(AppOptions options)
@@ -15,6 +27,11 @@ public class FileFilter
     public bool ShouldSkip(string filePath, string currentSourceDirectoryRoot)
     {
         if (IsOutputFile(filePath))
+        {
+            return true;
+        }
+
+        if (IsConfigFile(filePath))
         {
             return true;
         }
@@ -48,13 +65,26 @@ public class FileFilter
         return true;
     }
 
+    private bool IsConfigFile(string filePath)
+    {
+        if (string.IsNullOrEmpty(_options.ConfigFilePath) ||
+            !string.Equals(filePath, _options.ConfigFilePath, StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        Log.Verbose($"Skipping '{filePath}' because it is the configuration file.");
+        return true;
+    }
+
     private bool IsExcludedFileName(string filePath)
     {
         string fileName = Path.GetFileName(filePath);
 
-        if (_options.ExcludeFileNames.Contains(fileName, StringComparer.OrdinalIgnoreCase))
+        if (s_defaultExcludedFileNames.Contains(fileName) ||
+            _options.ExcludeFileNames.Contains(fileName, StringComparer.OrdinalIgnoreCase))
         {
-            Log.Verbose($"Skipping '{fileName}' due to 'excludeFileNames' rule.");
+            Log.Verbose($"Skipping '{fileName}' due to excluded file name rule.");
             return true;
         }
 
@@ -75,7 +105,8 @@ public class FileFilter
 
         foreach (string segment in directorySegments)
         {
-            if (!_options.ExcludeDirectoryNames.Contains(segment, StringComparer.OrdinalIgnoreCase))
+            if (!s_defaultExcludedDirectories.Contains(segment) &&
+                !_options.ExcludeDirectoryNames.Contains(segment, StringComparer.OrdinalIgnoreCase))
             {
                 continue;
             }
@@ -83,6 +114,7 @@ public class FileFilter
             Log.Verbose($"Skipping '{filePath}' because it's in an excluded directory ('{segment}').");
             return true;
         }
+
         return false;
     }
 
@@ -97,7 +129,7 @@ public class FileFilter
 
         if (_options.ExcludeExtensions.Contains(fileExtension, StringComparer.OrdinalIgnoreCase))
         {
-            Log.Verbose($"Skipping '{Path.GetFileName(filePath)}' due to 'excludeExtensions' rule for '{fileExtension}'.");
+            Log.Verbose($"Skipping '{Path.GetFileName(filePath)}' due to 'exclude_extensions' rule for '{fileExtension}'.");
             return true;
         }
 
@@ -112,12 +144,9 @@ public class FileFilter
         }
 
         string fileExtension = Path.GetExtension(filePath);
-        bool isIncluded = _options.IncludeExtensions.Contains(fileExtension, StringComparer.OrdinalIgnoreCase);
-        bool isPathOnly = _options.PathOnlyExtensions.Contains(fileExtension, StringComparer.OrdinalIgnoreCase);
-
-        if (!isIncluded && !isPathOnly)
+        if (!_options.IncludeExtensions.Contains(fileExtension, StringComparer.OrdinalIgnoreCase))
         {
-            Log.Verbose($"Skipping '{Path.GetFileName(filePath)}' because its extension ('{fileExtension}') is not in 'includeExtensions' or 'pathOnlyExtensions'.");
+            Log.Verbose($"Skipping '{Path.GetFileName(filePath)}' because its extension ('{fileExtension}') is not in 'include_extensions'.");
             return true;
         }
 

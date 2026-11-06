@@ -26,7 +26,14 @@ public static class ConfigurationProvider
 
         Log.Info($"Loading configuration from: {resolvedConfig.FullName}");
         AppOptions? options = LoadOptionsFromTomlFile(resolvedConfig.FullName);
-        return options is not null && Validate(options) ? options : null;
+
+        if (options is null || !Validate(options))
+        {
+            return null;
+        }
+
+        options.ConfigFilePath = resolvedConfig.FullName;
+        return options;
     }
 
     private static AppOptions? LoadOptionsFromTomlFile(string configPath)
@@ -63,15 +70,15 @@ public static class ConfigurationProvider
     {
         bool hasError = false;
 
-        if (string.IsNullOrEmpty(options.OutputFilePath))
+        if (string.IsNullOrWhiteSpace(options.OutputFilePath))
         {
-            Log.Error("Missing 'OutputFilePath' in the configuration file.");
+            Log.Error("Missing 'output' in the configuration file.");
             hasError = true;
         }
 
         if (options.SourceDirectoryPaths.Count == 0)
         {
-            Log.Error("Missing 'SourceDirectoryPaths'. Please provide at least one source directory in the configuration file.");
+            Log.Error("Missing 'sources'. Please provide at least one source directory in the configuration file.");
             hasError = true;
         }
 

@@ -15,12 +15,13 @@ This is a solo project, developed almost entirely by AI. It's built primarily fo
 ## ✅ Features
 
 - **Directory Merging**: Scans one or more source directories and merges all eligible files.
-- **Configuration File**: Easily configure all merge and filtering options using a `coalesce.toml` file.
+- **Configuration File**: Easily configure merge and filtering options using a concise `coalesce.toml` file.
 - **Smart Filtering**:
-  - Include files based on a whitelist of extensions (`IncludeExtensions`).
-  - Exclude directories and files by name (`ExcludeDirectoryNames`, `ExcludeFileNames`).
-  - Exclude files by extension (`ExcludeExtensions`).
-- **Path-Only Mode**: Include the path of binary or irrelevant files without their content (`PathOnlyExtensions`).
+  - Include files based on a whitelist of extensions (`include_extensions`).
+  - Exclude directories and files by name (`exclude_dirs`, `exclude_files`).
+  - Exclude files by extension (`exclude_extensions`).
+  - Built-in defaults automatically skip `.git`, `.DS_Store`, `Thumbs.db`, `coalesce.toml` (or the active `--config` file), and the output file itself.
+- **Automatic Binary Handling**: Automatically detects binary files (by extension or null-byte inspection) and includes their path in the output without dumping raw binary content.
 - **Project Presets**: Quickly generate a `coalesce.toml` for common project types like `dotnet` and `node`.
 - **Dry Run Mode**: Preview which files will be included in the output without actually writing the file using the `--dry-run` flag.
 
@@ -68,14 +69,14 @@ The easiest way to get started is by using the `init` command in your project's 
 
 2. **Customize `coalesce.toml`**
    
-   Open the newly created `coalesce.toml` and edit `SourceDirectoryPaths` and other options to match your project structure.
+   Open the newly created `coalesce.toml` and edit `sources` and other options to match your project structure.
    
    ```toml
-   # Path for the final merged output file.
-   OutputFilePath = "coalesce.md"
+   # Path for the final merged output file (defaults to "coalesce.md" if omitted).
+   output = "coalesce.md"
    
    # List of source directories to scan for files.
-   SourceDirectoryPaths = [
+   sources = [
      "./src",
      # "./another-source-folder"
    ]
@@ -159,50 +160,28 @@ Here is the default configuration:
 # Default configuration for Coalesce.
 # Use 'coalesce init --preset <name>' for project-specific templates (e.g., dotnet, node).
 
-# Path for the final merged output file.
-OutputFilePath = "coalesce.md"
+# Path for the final merged output file (defaults to "coalesce.md" if omitted).
+output = "coalesce.md"
 
 # List of source directories to scan for files.
-SourceDirectoryPaths = [
+sources = [
   "./src"
 ]
 
-# (Whitelist) To process ONLY specific file types, add their extensions here (e.g., ".cs", ".py").
-# If this list is empty, Coalesce processes ALL files not matched by other exclusion rules.
-IncludeExtensions = []
+# (Whitelist) Process ONLY these file extensions (e.g., [".cs", ".py"]).
+# Leave empty to process all files not matched by exclusion rules.
+include_extensions = []
 
-# (Blacklist) Explicitly skip files with these extensions.
-ExcludeExtensions = []
+# (Blacklist) Skip files with these extensions.
+exclude_extensions = []
 
 # Skip directories with these names (case-insensitive).
-ExcludeDirectoryNames = [
-  ".git"
-]
+# Note: '.git' is always excluded automatically.
+exclude_dirs = []
 
 # Skip files with these names (case-insensitive).
-ExcludeFileNames = [
-  ".DS_Store",
-  "Thumbs.db",
-  "coalesce.toml"
-]
-
-# For these file types, only include their path in the output, not their content.
-# Useful for binary files like images, DLLs, etc.
-PathOnlyExtensions = [
-  ".png",
-  ".jpg",
-  ".jpeg",
-  ".gif",
-  ".bmp",
-  ".svg",
-  ".ico",
-  ".webp",
-  ".dll",
-  ".exe",
-  ".so",
-  ".bin",
-  ".pdf"
-]
+# Note: the output file, 'coalesce.toml', '.DS_Store', and 'Thumbs.db' are always excluded automatically.
+exclude_files = []
 ```
 
 ---
@@ -213,8 +192,8 @@ Presets are built-in templates for `coalesce.toml` that help you get started qui
 
 **Available Presets**
 
-- `dotnet`: Configured for .NET projects (includes `.cs`, `.csproj`, `.sln`, etc., and excludes `bin`, `obj`, `.vs`, `packages`).
-- `node`: Configured for Node.js projects (includes `.js`, `.ts`, `.jsx`, `.tsx`, etc., and excludes `node_modules`, `dist`, `build`, lock files).
+- `dotnet`: Configured for .NET projects (includes `.cs`, `.csproj`, `.slnx`, `.sln`, `.props`, etc., and excludes `bin`, `obj`, `.vs`, `artifacts`, `packages`).
+- `node`: Configured for Node.js projects (includes `.js`, `.ts`, `.jsx`, `.tsx`, etc., and excludes `node_modules`, `dist`, `build`, `.cache`, lock files).
 
 **Using a Preset**
 
