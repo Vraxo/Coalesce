@@ -25,24 +25,6 @@ This is a solo project, developed almost entirely by AI. It's built primarily fo
 
 ---
 
-## 📥 Installation
-
-**Platform Support Note:** Coalesce is developed and tested primarily on **Windows** 🖥️. While the core functionality is intended to be cross-platform, its behavior on macOS and Linux has not been verified. Some features, like the automatic `install` command, are Windows-specific.
-
-1. Download the latest executable for your operating system from the **Releases** page.
-2. Place the executable in a directory of your choice.
-3. For ease of use, add this directory to your system's PATH environment variable.
-
-For Windows users, you can use the built-in command to add Coalesce to your user PATH automatically:
-
-```sh
-coalesce install
-```
-
-*You may need to restart your terminal for the PATH change to take effect.*
-
----
-
 ## 🚀 Quick Start
 
 1. **Run Immediately (Zero Config)**
@@ -119,13 +101,6 @@ Generates a starter `.coalesce` configuration file in the current directory.
 ```sh
 coalesce init
 ```
-
-#### `install` / `uninstall`
-
-Manages the application's presence in the system PATH.
-
-- On **Windows**, this command modifies the user's PATH automatically.
-- On **macOS/Linux**, this command displays manual instructions for updating your PATH.
 
 ---
 

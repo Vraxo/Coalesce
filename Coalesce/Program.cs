@@ -1,4 +1,4 @@
-﻿using Coalesce.Cli;
+using Coalesce.Cli;
 using Spectre.Console.Cli;
 
 namespace Coalesce;
@@ -14,8 +14,6 @@ internal static class Program
             config.SetApplicationName("coalesce");
 
             config.AddCommand<InitCommand>("init");
-            config.AddCommand<InstallCommand>("install");
-            config.AddCommand<UninstallCommand>("uninstall");
         });
 
         return await app.RunAsync(args);
